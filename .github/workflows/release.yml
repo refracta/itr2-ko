@@ -3,6 +3,12 @@ name: Release
 on:
   push:
     branches: [main]
+    paths:
+      - translations/**
+      - raw/private_inputs.tar.gpg
+      - scripts/build/**
+      - scripts/install/**
+      - requirements.txt
   workflow_dispatch:
 
 permissions:

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ITR2 한국어 번역 제안</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>ITR2 한국어 번역 제안</h1>
+        <p id="buildMeta">데이터를 불러오는 중</p>
+      </div>
+      <div class="topActions">
+        <button id="submitIssue" class="primary" disabled>Issue로 PR 요청</button>
+        <button id="exportProposal" disabled>JSON 내보내기</button>
+        <button id="clearChanges" disabled>변경 초기화</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <div class="filters">
+          <input id="searchInput" type="search" placeholder="원문, 번역, 참고 번역 검색" />
+          <select id="statusFilter" aria-label="필터">
+            <option value="all">전체</option>
+            <option value="changed">변경됨</option>
+            <option value="untranslated">원문과 동일</option>
+            <option value="withReference">참고 번역 있음</option>
+          </select>
+        </div>
+        <div class="stats" id="stats"></div>
+        <div class="resultMeta" id="resultMeta"></div>
+        <div class="list" id="sourceList"></div>
+      </aside>
+
+      <section class="editor" id="editor">
+        <div class="emptyState">
+          왼쪽에서 문자열을 선택하세요.
+        </div>
+      </section>
+    </main>
+
+    <template id="editorTemplate">
+      <div class="editorHeader">
+        <div>
+          <p class="muted" data-field="sourceId"></p>
+          <h2 data-field="title"></h2>
+        </div>
+        <button data-action="revert">이 항목 되돌리기</button>
+      </div>
+
+      <div class="fieldGroup">
+        <label>원문</label>
+        <pre data-field="source"></pre>
+      </div>
+
+      <div class="fieldGroup">
+        <label for="koEditor">한국어</label>
+        <textarea id="koEditor" data-field="ko"></textarea>
+      </div>
+
+      <div class="checks" data-field="checks"></div>
+
+      <div class="refs">
+        <div>
+          <label>러시아어 참고</label>
+          <pre data-field="referenceRu"></pre>
+        </div>
+        <div>
+          <label>일본어 참고</label>
+          <pre data-field="referenceJa"></pre>
+        </div>
+      </div>
+
+      <div class="recordInfo" data-field="recordInfo"></div>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>

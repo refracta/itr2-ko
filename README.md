@@ -4,10 +4,15 @@ Into the Radius 2 커뮤니티 한국어 패치 빌드 파이프라인입니다.
 
 ## 번역 참여
 
-1. `translations/records_with_ko.json` 또는 `translations/unique_sources_with_ko.json`을 수정합니다.
-2. Pull Request를 엽니다.
-3. CI가 JSON 형식, placeholder 보존, 번역 누락 여부를 검사합니다.
-4. `main`에 병합되면 CI가 패치를 다시 빌드하고 새 릴리즈를 만듭니다.
+웹 번역 제안 페이지:
+
+```text
+https://refracta.github.io/itr2-ko/
+```
+
+페이지에서 번역을 수정한 뒤 `Issue로 PR 요청`을 누르면 GitHub Issue 작성 화면이 열립니다. Issue를 제출하면 GitHub Actions가 제안 JSON을 검증하고 자동으로 PR을 생성합니다.
+
+직접 수정하려면 `translations/unique_sources_with_ko.json`과 `translations/records_with_ko.json`을 같은 `source_id` 기준으로 함께 수정한 뒤 Pull Request를 열면 됩니다. CI가 JSON 형식, placeholder 보존, 번역 누락 여부를 검사합니다. `main`에 병합되면 CI가 패치를 다시 빌드하고 새 릴리즈를 만듭니다.
 
 ## 설치
 

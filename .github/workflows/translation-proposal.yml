@@ -1,0 +1,119 @@
+name: Translation Proposal
+
+on:
+  issues:
+    types: [opened, edited]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue number containing a translation proposal
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: translation-proposal-${{ github.event.issue.number || inputs.issue_number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  create-pr:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.issue.body || '', 'ITR2_KO_TRANSLATION_PROPOSAL_V1')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Resolve issue body
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${ISSUE_NUMBER:-}" ]]; then
+            echo "ISSUE_NUMBER is required" >&2
+            exit 1
+          fi
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            gh issue view "$ISSUE_NUMBER" --json body -q .body > "$RUNNER_TEMP/issue_body.md"
+          else
+            python - <<'PY'
+          import os
+          from pathlib import Path
+
+          Path(os.environ["RUNNER_TEMP"], "issue_body.md").write_text(
+              os.environ.get("ISSUE_BODY") or "",
+              encoding="utf-8",
+          )
+          PY
+          fi
+      - name: Apply proposal
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+        run: |
+          set -euo pipefail
+          BRANCH="translation/proposal-${ISSUE_NUMBER}"
+          git checkout -B "$BRANCH"
+          python scripts/apply_translation_proposal.py \
+            --issue-body "$RUNNER_TEMP/issue_body.md" \
+            --summary "$RUNNER_TEMP/proposal_summary.json"
+          python scripts/validate/translations.py
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet -- translations/records_with_ko.json translations/unique_sources_with_ko.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Comment when unchanged
+        if: steps.diff.outputs.changed == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+        run: gh issue comment "$ISSUE_NUMBER" --body "제안 JSON은 유효하지만 현재 번역 파일과 동일해서 PR을 만들지 않았습니다."
+      - name: Commit and push
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+        run: |
+          set -euo pipefail
+          BRANCH="translation/proposal-${ISSUE_NUMBER}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add translations/records_with_ko.json translations/unique_sources_with_ko.json
+          git commit -m "Apply translation proposal #${ISSUE_NUMBER}"
+          git push --force origin "$BRANCH"
+      - name: Create or update PR
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+        run: |
+          set -euo pipefail
+          BRANCH="translation/proposal-${ISSUE_NUMBER}"
+          SUMMARY="$(cat "$RUNNER_TEMP/proposal_summary.json")"
+          BODY="$(cat <<EOF
+          번역 제안 Issue #${ISSUE_NUMBER}에서 자동 생성한 PR입니다.
+
+          Closes #${ISSUE_NUMBER}
+
+          \`\`\`json
+          ${SUMMARY}
+          \`\`\`
+          EOF
+          )"
+          EXISTING_URL="$(gh pr list --base main --head "${GITHUB_REPOSITORY_OWNER}:${BRANCH}" --json url -q '.[0].url // ""')"
+          if [[ -n "$EXISTING_URL" ]]; then
+            gh pr edit "$EXISTING_URL" --title "번역 제안 #${ISSUE_NUMBER}" --body "$BODY"
+            gh issue comment "$ISSUE_NUMBER" --body "기존 PR을 업데이트했습니다: $EXISTING_URL"
+          else
+            PR_URL="$(gh pr create --base main --head "$BRANCH" --title "번역 제안 #${ISSUE_NUMBER}" --body "$BODY")"
+            gh issue comment "$ISSUE_NUMBER" --body "PR을 생성했습니다: $PR_URL"
+          fi
