@@ -2,6 +2,19 @@
 
 Into the Radius 2 커뮤니티 한국어 패치입니다.
 
+## 번역 견본
+
+<table>
+  <tr>
+    <td width="50%"><img src="https://github.com/user-attachments/assets/74e8e2f9-6e89-4fbd-8f9a-e5e9ddd77e30" alt="Into the Radius 2 한국어 패치 번역 견본 1" width="640" height="360"></td>
+    <td width="50%"><img src="https://github.com/user-attachments/assets/ca0a719a-5789-493e-80c0-ab7889ae8ec4" alt="Into the Radius 2 한국어 패치 번역 견본 2" width="640" height="360"></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="https://github.com/user-attachments/assets/f826e7bd-7ccf-4850-8a81-d71f5c77f680" alt="Into the Radius 2 한국어 패치 번역 견본 3" width="640" height="360"></td>
+    <td width="50%"><img src="https://github.com/user-attachments/assets/4fbf4ecd-bc79-465c-8d8c-ff428e9810be" alt="Into the Radius 2 한국어 패치 번역 견본 4" width="640" height="360"></td>
+  </tr>
+</table>
+
 ## 번역 참여
 
 웹 번역 제안 페이지: [https://refracta.github.io/itr2-ko/](https://refracta.github.io/itr2-ko/)
@@ -58,67 +71,16 @@ Virtual Desktop/일반 HMD 모드로 원복:
 
 이 도구는 SteamVR 전역 설정의 `forcedDriver`를 바꾸므로 테스트 후 반드시 원복해야 합니다. 자세한 사용법은 `tools/vr-kbm-test-driver/README.md`를 참고하세요.
 
-## Raw 입력 준비
+## 개발 문서
 
-직접 빌드할 때 사용하는 로컬 입력 파일입니다. 평문 원본 게임 파일은 커밋하지 않습니다.
-
-게임 설치 폴더 예:
-
-```text
-C:\Program Files (x86)\Steam\steamapps\common\IntoTheRadius2
-```
-
-원본 게임 폴더에서 프로젝트로 복사하는 파일:
-
-| 원본 게임 파일 | 프로젝트 위치 | 용도 |
-| --- | --- | --- |
-| `IntoTheRadius2/Content/Paks/pakchunk0-Windows.pak` | `raw/game/pakchunk0-Windows.pak` | 원본 `Game.locres`, `Game.locmeta` 추출 |
-
-`EnglishSource.uasset` raw 파일을 새로 만들 때는 원본 게임 폴더의 아래 두 파일도 필요합니다.
-
-```text
-IntoTheRadius2/Content/Paks/pakchunk0-Windows.utoc
-IntoTheRadius2/Content/Paks/pakchunk0-Windows.ucas
-```
-
-추출 예:
-
-```bash
-python scripts/build/extract_iostore_file.py \
-  "/path/to/IntoTheRadius2/Content/Paks/pakchunk0-Windows.utoc" \
-  "/path/to/IntoTheRadius2/Content/Paks/pakchunk0-Windows.ucas" \
-  "../../../Projectc/Content/ITR2/Configurations/Localization/EnglishSource.uasset" \
-  -o raw/base/EnglishSource.uasset.raw
-```
-
-전체 raw 입력 구조:
-
-```text
-raw/
-  game/
-    pakchunk0-Windows.pak
-  base/
-    EnglishSource.uasset.raw
-    EnglishSource.locres_meta.json
-  prebuilt/
-    pakchunk100-KO_NotoSansKRFonts_P.pak
-    pakchunk999-Windows_P.pak
-    pakchunk999-Windows_P.utoc
-    pakchunk999-Windows_P.ucas
-```
-
-`raw/base/EnglishSource.uasset.raw`는 원본 게임의 `../../../Projectc/Content/ITR2/Configurations/Localization/EnglishSource.uasset`를 추출한 raw 파일입니다.
-
-`raw/base/EnglishSource.locres_meta.json`는 `EnglishSource.uasset` 문자열을 `Game.locres`의 `EnglishSource` namespace에도 넣기 위한 해시 메타데이터입니다. 일부 UI는 uasset 직접 패치보다 locres 경로를 먼저 읽기 때문에 필요합니다.
-
-`raw/prebuilt/` 파일은 한국어 폰트와 UI 폰트 override입니다. 번역문만 수정하는 경우 다시 만들 필요가 없습니다.
+원본 게임 리소스 준비, 번역 대상 리소스, 패치 적용 원리는 [README.docs.md](README.docs.md)를 참고하세요.
 
 ## 참고한 모드
 
-아래 모드와 글은 파일 구조, 설치 경로, 폰트 처리, 번역 범위 분석에 참고했습니다. 이 저장소와 릴리즈에는 해당 모드의 파일, 번역문, 에셋을 포함하지 않습니다.
+아래 모드와 글은 파일 구조, 설치 경로, 폰트 처리, 번역 범위 분석에 참고했습니다.
 
-- Nexus Mods: Japanese Translation Mod
-- Nexus Mods: ITR2 Japanese Translation by Reindeer1899
-- Nexus Mods: Russian for Into the Radius 2
-- Steam Community Guide: Руссификатор
-- Steam Discussion: LOCALIZATION - MOD - DEV
+- Nexus Mods: [Japanese Translation Mod](https://www.nexusmods.com/intotheradius2/mods/145)
+- Nexus Mods: [ITR2 Japanese Translation by Reindeer1899](https://www.nexusmods.com/intotheradius2/mods/211)
+- Nexus Mods: [Russian for Into the Radius 2](https://www.nexusmods.com/intotheradius2/mods/144)
+- Steam Community Guide: [Руссификатор](https://steamcommunity.com/sharedfiles/filedetails/?id=3657194872)
+- Steam Discussion: [LOCALIZATION - MOD - DEV](https://steamcommunity.com/app/2307350/discussions/0/591783706468080541/)

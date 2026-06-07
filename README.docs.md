@@ -4,15 +4,15 @@
 
 ## 참고한 커뮤니티 번역 모드
 
-조사한 다른 언어 모드는 이 저장소에 포함하지 않습니다. 파일 구조, 번역 범위, 폰트 처리, 설치 방식만 참고했습니다.
+파일 구조, 번역 범위, 폰트 처리, 설치 방식 분석에 참고했습니다.
 
 | 언어 | 사례 | 확인한 점 |
 | --- | --- | --- |
-| 일본어 | Nexus Mods: Japanese Translation Mod | 기계번역 기반으로 튜토리얼, 퀘스트, UI, 아이템명을 폭넓게 처리한 것으로 보입니다. `Game.locres`뿐 아니라 `EnglishSource` 계열 문자열을 함께 다루는 구조가 확인됐습니다. |
-| 일본어 | Nexus Mods: ITR2 Japanese Translation by Reindeer1899 | 수동 번역 모드입니다. v1.0.6 대응, 일부 폰트를 Noto Sans Japanese로 교체, 하드코딩 텍스트 일부는 영어로 남는다고 설명합니다. 설치는 여러 파일을 `IntoTheRadius2/Content/Paks`에 넣는 방식입니다. |
-| 러시아어 | Nexus Mods: Russian for Into the Radius 2 | 게임을 러시아어로 번역하는 모드입니다. locres와 uasset 양쪽을 분석할 때 기준 자료로 썼습니다. |
-| 러시아어 | Steam Community Guide: Руссификатор | 99% 텍스트 러시아어화를 주장합니다. 설치 경로가 `Content/Paks`와 `Content/Paks/Mods`로 나뉘며, `Game.locres`, `EnglishSource.uasset` 언급이 있습니다. |
-| 이탈리아어 | Steam Discussion: LOCALIZATION - MOD - DEV | 첫 챕터 번역 모드 사례가 있었습니다. 개발자는 정식 1.0 또는 그 직후 로컬라이징을 검토하겠다고 답했습니다. |
+| 일본어 | Nexus Mods: [Japanese Translation Mod](https://www.nexusmods.com/intotheradius2/mods/145) | 기계번역 기반으로 튜토리얼, 퀘스트, UI, 아이템명을 폭넓게 처리한 것으로 보입니다. `Game.locres`뿐 아니라 `EnglishSource` 계열 문자열을 함께 다루는 구조가 확인됐습니다. |
+| 일본어 | Nexus Mods: [ITR2 Japanese Translation by Reindeer1899](https://www.nexusmods.com/intotheradius2/mods/211) | 수동 번역 모드입니다. v1.0.6 대응, 일부 폰트를 Noto Sans Japanese로 교체, 하드코딩 텍스트 일부는 영어로 남는다고 설명합니다. 설치는 여러 파일을 `IntoTheRadius2/Content/Paks`에 넣는 방식입니다. |
+| 러시아어 | Nexus Mods: [Russian for Into the Radius 2](https://www.nexusmods.com/intotheradius2/mods/144) | 게임을 러시아어로 번역하는 모드입니다. locres와 uasset 양쪽을 분석할 때 기준 자료로 썼습니다. |
+| 러시아어 | Steam Community Guide: [Руссификатор](https://steamcommunity.com/sharedfiles/filedetails/?id=3657194872) | 99% 텍스트 러시아어화를 주장합니다. 설치 경로가 `Content/Paks`와 `Content/Paks/Mods`로 나뉘며, `Game.locres`, `EnglishSource.uasset` 언급이 있습니다. |
+| 이탈리아어 | Steam Discussion: [LOCALIZATION - MOD - DEV](https://steamcommunity.com/app/2307350/discussions/0/591783706468080541/) | 첫 챕터 번역 모드 사례가 있었습니다. 개발자는 정식 1.0 또는 그 직후 로컬라이징을 검토하겠다고 답했습니다. |
 
 중요한 결론은 러시아어와 일본어 모드 모두 `Game.locres`만 바꾸는 방식으로는 충분하지 않았다는 점입니다. Into the Radius 2는 일부 UI와 자막성 텍스트를 `EnglishSource.uasset` 쪽에서도 읽습니다.
 
@@ -51,6 +51,75 @@
 - 고유 원문과 위치 레코드가 서로 참조되는지
 - 번역 대상인데 `ko`가 비어 있지 않은지
 - placeholder가 번역문에서 사라지지 않았는지
+
+## 번역 대상 게임 리소스
+
+현재 텍스트 패치의 기준이 되는 원본 리소스는 아래입니다.
+
+| 원본 게임 리소스 | 프로젝트 입력 | 패치 산출물 | 용도 |
+| --- | --- | --- | --- |
+| `IntoTheRadius2/Content/Localization/Game/en/Game.locres` | `raw/game/pakchunk0-Windows.pak`에서 추출 | `pakchunk99-KO_Locres_P.pak` | 일반 Unreal localization 문자열 |
+| `IntoTheRadius2/Content/Localization/Game/Game.locmeta` | `raw/game/pakchunk0-Windows.pak`에서 추출 | `pakchunk99-KO_Locres_P.pak` | locres와 함께 들어가는 localization metadata |
+| `../../../Projectc/Content/ITR2/Configurations/Localization/EnglishSource.uasset` | `raw/base/EnglishSource.uasset.raw` | `pakchunk99-KO_UAsset-Windows.*` | locres 밖에 남는 UI, 자막성 텍스트, 설정 문자열 |
+| `EnglishSource` namespace locres metadata | `raw/base/EnglishSource.locres_meta.json` | `pakchunk99-KO_Locres_P.pak` | uasset 문자열을 locres 경로에서도 읽히게 하는 보강 데이터 |
+| UI/Slate/UMG 폰트 에셋 | `raw/prebuilt/*` | `pakchunk100-KO_NotoSansKRFonts_P.pak`, `pakchunk999-Windows_P.*` | 한글 글리프 표시 |
+
+텍스처에 구워진 표지판 문구는 위 리소스로 번역되지 않습니다. 그런 문구는 별도 텍스처 패치 대상입니다.
+
+## Raw 입력 준비
+
+직접 빌드할 때 사용하는 로컬 입력 파일입니다. 평문 원본 게임 파일은 커밋하지 않습니다.
+
+게임 설치 폴더 예:
+
+```text
+C:\Program Files (x86)\Steam\steamapps\common\IntoTheRadius2
+```
+
+원본 게임 폴더에서 프로젝트로 복사하는 파일:
+
+| 원본 게임 파일 | 프로젝트 위치 | 용도 |
+| --- | --- | --- |
+| `IntoTheRadius2/Content/Paks/pakchunk0-Windows.pak` | `raw/game/pakchunk0-Windows.pak` | 원본 `Game.locres`, `Game.locmeta` 추출 |
+
+`EnglishSource.uasset` raw 파일을 새로 만들 때는 원본 게임 폴더의 아래 두 파일도 필요합니다.
+
+```text
+IntoTheRadius2/Content/Paks/pakchunk0-Windows.utoc
+IntoTheRadius2/Content/Paks/pakchunk0-Windows.ucas
+```
+
+추출 예:
+
+```bash
+python scripts/build/extract_iostore_file.py \
+  "/path/to/IntoTheRadius2/Content/Paks/pakchunk0-Windows.utoc" \
+  "/path/to/IntoTheRadius2/Content/Paks/pakchunk0-Windows.ucas" \
+  "../../../Projectc/Content/ITR2/Configurations/Localization/EnglishSource.uasset" \
+  -o raw/base/EnglishSource.uasset.raw
+```
+
+전체 raw 입력 구조:
+
+```text
+raw/
+  game/
+    pakchunk0-Windows.pak
+  base/
+    EnglishSource.uasset.raw
+    EnglishSource.locres_meta.json
+  prebuilt/
+    pakchunk100-KO_NotoSansKRFonts_P.pak
+    pakchunk999-Windows_P.pak
+    pakchunk999-Windows_P.utoc
+    pakchunk999-Windows_P.ucas
+```
+
+`raw/base/EnglishSource.uasset.raw`는 원본 게임의 `../../../Projectc/Content/ITR2/Configurations/Localization/EnglishSource.uasset`를 추출한 raw 파일입니다.
+
+`raw/base/EnglishSource.locres_meta.json`는 `EnglishSource.uasset` 문자열을 `Game.locres`의 `EnglishSource` namespace에도 넣기 위한 해시 메타데이터입니다. 일부 UI는 uasset 직접 패치보다 locres 경로를 먼저 읽기 때문에 필요합니다.
+
+`raw/prebuilt/` 파일은 한국어 폰트와 UI 폰트 override입니다. 번역문만 수정하는 경우 다시 만들 필요가 없습니다.
 
 ## 현재 패치 적용 원리
 
