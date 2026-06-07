@@ -37,8 +37,8 @@ BASE_ENGLISHSOURCE_CANDIDATES = [
     RAW / "base_EnglishSource.uasset.raw",
 ]
 ENGLISHSOURCE_TEMPLATE_DIR_CANDIDATES = [
-    RAW / "templates" / "russian_translation_mod",
-    RAW / "russian_translation_mod",
+    RAW / "templates" / "englishsource_iostore",
+    RAW / "englishsource_iostore",
 ]
 
 GAME_LOCRES_PATH = "IntoTheRadius2/Content/Localization/Game/en/Game.locres"
@@ -419,9 +419,9 @@ def read_template_entry1_payload(utoc: bytes, ucas: bytes, layout: dict[str, int
 
 def build_englishsource_iostore(patched_uasset: bytes) -> tuple[list[Path], dict]:
     template_dir = first_existing(ENGLISHSOURCE_TEMPLATE_DIR_CANDIDATES)
-    template_pak = template_dir / "pakchunk10-Windows.pak"
-    template_utoc = template_dir / "pakchunk10-Windows.utoc"
-    template_ucas = template_dir / "pakchunk10-Windows.ucas"
+    template_pak = template_dir / f"{ENGLISHSOURCE_BASENAME}.pak"
+    template_utoc = template_dir / f"{ENGLISHSOURCE_BASENAME}.utoc"
+    template_ucas = template_dir / f"{ENGLISHSOURCE_BASENAME}.ucas"
     for path in [template_pak, template_utoc, template_ucas]:
         if not path.exists():
             raise FileNotFoundError(path)
