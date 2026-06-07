@@ -142,7 +142,7 @@ function Copy-PatchFile {
     Write-Host "복사 완료: $(Split-Path -Leaf $Source)" -ForegroundColor Green
 }
 
-Write-Host "Into the Radius 2 한국어 패치 자동 설치를 시작합니다." -ForegroundColor Cyan
+Write-Host "Into the Radius 2 한국어 번역 패치 자동 설치를 시작합니다." -ForegroundColor Cyan
 
 $gamePath = Get-SteamITR2Path
 if ($gamePath) {
@@ -182,5 +182,5 @@ foreach ($file in $PatchFiles) {
 }
 
 Write-Host ""
-Write-Host "한국어 패치 설치가 완료되었습니다." -ForegroundColor Green
+Write-Host "한국어 번역 패치 설치가 완료되었습니다." -ForegroundColor Green
 Write-Host "게임을 이미 실행 중이라면 종료 후 다시 실행하세요."

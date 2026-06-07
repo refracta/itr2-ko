@@ -621,7 +621,7 @@ def write_release_readme() -> Path:
     path.write_text(
         "\n".join(
             [
-                "Into the Radius 2 한국어 패치",
+                "Into the Radius 2 한국어 번역 패치",
                 "",
                 f"호환 버전: Into the Radius 2 {COMPAT_GAME_VERSION}",
                 f"Steam buildid: {COMPAT_STEAM_BUILDID}",

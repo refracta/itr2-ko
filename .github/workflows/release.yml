@@ -71,4 +71,4 @@ jobs:
           git push origin "$TAG"
           gh release create "$TAG" dist/ITR2_Korean.zip dist/build_summary.json \
             --title "$TITLE" \
-            --notes "main ${GITHUB_SHA} 기준으로 자동 빌드된 Into the Radius 2 한국어 패치입니다."
+            --notes "main ${GITHUB_SHA} 기준으로 자동 빌드된 Into the Radius 2 한국어 번역 패치입니다."
