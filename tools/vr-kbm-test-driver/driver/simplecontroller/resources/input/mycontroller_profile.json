@@ -1,0 +1,133 @@
+{
+	"jsonid": "input_profile",
+	"controller_type": "knuckles",
+	"device_class": "TrackedDeviceClass_Controller",
+	"driver_name": "simplecontroller",
+	"input_bindingui_mode": "controller_handed",
+	"should_show_binding_errors": true,
+	"input_bindingui_left": {
+		"image": "{simplecontroller}/icons/sample_controller.svg"
+	},
+	"input_bindingui_right": {
+		"image": "{simplecontroller}/icons/sample_controller.svg"
+	},
+	"input_source": {
+		"/input/joystick": {
+			"binding_image_point": [ 80, 60 ],
+			"type": "joystick",
+			"click": true,
+			"touch": true,
+			"order": 1
+		},
+		"/input/thumbstick": {
+			"binding_image_point": [ 80, 60 ],
+			"type": "joystick",
+			"click": true,
+			"touch": true,
+			"order": 1
+		},
+		"/input/trackpad": {
+			"binding_image_point": [ 100, 80 ],
+			"type": "trackpad",
+			"click": true,
+			"touch": true,
+			"force": true,
+			"order": 2
+		},
+		"/input/trigger": {
+			"binding_image_point": [ 250, 60 ],
+			"type": "trigger",
+			"value": true,
+			"click": true,
+			"touch": true,
+			"order": 2
+		},
+		"/input/grip": {
+			"binding_image_point": [ 250, 110 ],
+			"type": "trigger",
+			"value": true,
+			"click": true,
+			"touch": true,
+			"force": true,
+			"order": 3
+		},
+		"/input/a": {
+			"binding_image_point": [ 110, 50 ],
+			"type": "button",
+			"click": true,
+			"touch": true,
+			"order": 4
+		},
+		"/input/b": {
+			"binding_image_point": [ 135, 35 ],
+			"type": "button",
+			"click": true,
+			"touch": true,
+			"order": 5
+		},
+		"/input/x": {
+			"binding_image_point": [ 110, 50 ],
+			"type": "button",
+			"side": "left",
+			"click": true,
+			"touch": true,
+			"order": 4
+		},
+		"/input/y": {
+			"binding_image_point": [ 135, 35 ],
+			"type": "button",
+			"side": "left",
+			"click": true,
+			"touch": true,
+			"order": 5
+		},
+		"/input/menu": {
+			"binding_image_point": [ 160, 70 ],
+			"type": "button",
+			"side": "left",
+			"click": true,
+			"touch": true,
+			"order": 6
+		},
+		"/input/system": {
+			"binding_image_point": [ 160, 100 ],
+			"type": "button",
+			"click": true,
+			"touch": true,
+			"order": 7
+		},
+		"/pose/raw": {
+			"binding_image_point": [ 80, 20 ],
+			"type": "pose"
+		},
+		"/pose/base": {
+			"binding_image_point": [ 80, 30 ],
+			"type": "pose"
+		},
+		"/pose/handgrip": {
+			"binding_image_point": [ 80, 40 ],
+			"type": "pose"
+		},
+		"/pose/tip": {
+			"binding_image_point": [ 80, 50 ],
+			"type": "pose"
+		},
+		"/pose/grip": {
+			"binding_image_point": [ 80, 40 ],
+			"type": "pose"
+		},
+		"/pose/openxr_aim": {
+			"binding_image_point": [ 80, 20 ],
+			"type": "pose"
+		},
+		"/pose/openxr_grip": {
+			"binding_image_point": [ 80, 40 ],
+			"type": "pose"
+		},
+		"/output/haptic": {
+			"binding_image_point": [ 300, 150 ],
+			"type": "vibration",
+			"order": 8
+		}
+	}
+}
