@@ -33,6 +33,31 @@ pakchunk999-Windows_P.utoc
 pakchunk999-Windows_P.ucas
 ```
 
+## 키보드/마우스 VR 테스트 드라이버
+
+VR 착용 없이 번역 UI, 자막, 표지판을 빠르게 확인하기 위한 SteamVR fake HMD 도구를 `tools/vr-kbm-test-driver/`에 포함했습니다.
+
+빌드/설치:
+
+```powershell
+& ".\tools\vr-kbm-test-driver\scripts\build-driver.ps1"
+```
+
+테스트 모드 실행:
+
+```powershell
+& ".\tools\vr-kbm-test-driver\scripts\start-itr2-kbm-test.ps1" `
+  -GameRoot "C:\Program Files (x86)\Steam\steamapps\common\IntoTheRadius2"
+```
+
+Virtual Desktop/일반 HMD 모드로 원복:
+
+```powershell
+& ".\tools\vr-kbm-test-driver\scripts\restore-virtual-desktop-mode.ps1" -StopProcesses
+```
+
+이 도구는 SteamVR 전역 설정의 `forcedDriver`를 바꾸므로 테스트 후 반드시 원복해야 합니다. 자세한 사용법은 `tools/vr-kbm-test-driver/README.md`를 참고하세요.
+
 ## Raw 입력 준비
 
 직접 빌드할 때 사용하는 로컬 입력 파일입니다. 평문 원본 게임 파일은 커밋하지 않습니다.
@@ -40,7 +65,7 @@ pakchunk999-Windows_P.ucas
 게임 설치 폴더 예:
 
 ```text
-I:\SteamLibrary\steamapps\common\IntoTheRadius2
+C:\Program Files (x86)\Steam\steamapps\common\IntoTheRadius2
 ```
 
 원본 게임 폴더에서 프로젝트로 복사하는 파일:
