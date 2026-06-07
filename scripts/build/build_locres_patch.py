@@ -25,6 +25,8 @@ RECORDS = ROOT / "translations" / "records_with_ko.json"
 INSTALLER_DIR = ROOT / "scripts" / "install"
 LOCRES_BASENAME = "pakchunk99-KO_Locres_P.pak"
 ENGLISHSOURCE_BASENAME = "pakchunk99-KO_UAsset-Windows"
+COMPAT_GAME_VERSION = "v1.0.6 rev 44918"
+COMPAT_STEAM_BUILDID = "23110238"
 EXPORT_SERIAL_SIZE_OFFSET = 0xD0
 FIRST_FSTRING_RELATIVE_OFFSET = 2
 AES_ALIGNMENT = 16
@@ -620,6 +622,10 @@ def write_release_readme() -> Path:
         "\n".join(
             [
                 "Into the Radius 2 한국어 패치",
+                "",
+                f"호환 버전: Into the Radius 2 {COMPAT_GAME_VERSION}",
+                f"Steam buildid: {COMPAT_STEAM_BUILDID}",
+                "게임 업데이트 후에는 일부 문자열이나 패치 경로가 맞지 않을 수 있습니다.",
                 "",
                 "설치 방법:",
                 "1. ITR2_Korean.zip의 압축을 완전히 풉니다.",
