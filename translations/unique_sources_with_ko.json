@@ -78644,7 +78644,7 @@
     "source_id": "9ce3bd4224c8c178",
     "source": "OK",
     "char_len": 2,
-    "translatable": false,
+    "translatable": true,
     "placeholders": [],
     "record_count": 6,
     "containers": [
@@ -78665,14 +78665,14 @@
     "reference_ja": [
       "OK"
     ],
-    "ko": "OK",
-    "translation_status": "copied_non_translatable"
+    "ko": "확인",
+    "translation_status": "translated"
   },
   {
     "source_id": "e0049a66519cae71",
     "source": "On",
     "char_len": 2,
-    "translatable": false,
+    "translatable": true,
     "placeholders": [],
     "record_count": 10,
     "containers": [
@@ -78697,8 +78697,8 @@
     "reference_ja": [
       "オン"
     ],
-    "ko": "On",
-    "translation_status": "copied_non_translatable"
+    "ko": "켜기",
+    "translation_status": "translated"
   },
   {
     "source_id": "05f9892a97d54101",

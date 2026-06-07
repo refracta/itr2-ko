@@ -8,9 +8,11 @@ import shutil
 import struct
 import zipfile
 import ctypes
+import zlib
 from collections import Counter
 from pathlib import Path
 
+import cityhash
 import pyuepak.entry as pyuepak_entry
 from pyuepak import PakFile
 from pyuepak.version import PakVersion
@@ -73,6 +75,54 @@ PROJECTC_COMPANION_PAK = bytes.fromhex(
     "0000000000000000000000000000000000000000000000000000000000000000"
     "00000000000000000000000000000000000000"
 )
+
+EXTRA_ENGLISHSOURCE_LOCRES_ENTRIES = [
+    {
+        "key": "41C7E447418490718B2CE78EFFFAE0D7",
+        "source": "Start new game",
+        "ko": "새 게임 시작",
+    },
+    {
+        "key": "CC36858D44605D96DB012A8B5292C316",
+        "source": "Starting a new game will delete all Single-player saves. Are you sure?",
+        "ko": "새 게임을 시작하면 모든 싱글플레이어 저장 데이터가 삭제됩니다. 계속하시겠습니까?",
+    },
+    {
+        "key": "A837DF4B4E68A3C81400B5BCE7986796",
+        "source": "Yes",
+        "ko": "예",
+    },
+    {
+        "key": "1368F6664F6161BA319FDDABB666CEB8",
+        "source": "No",
+        "ko": "아니요",
+    },
+    {
+        "key": "F3F66CB94CDD9B0AE45F8B92100FAB71",
+        "source": "Measurement",
+        "ko": "단위",
+    },
+    {
+        "key": "48FEA94B43498BA0086D6BACDDABA292",
+        "source": "Metric",
+        "ko": "미터법",
+    },
+    {
+        "key": "0185BCCD483EDA65844454AC76A01419",
+        "source": "Imperial",
+        "ko": "야드파운드법",
+    },
+    {
+        "key": "D20537AC41AB1CF99AD596893398A711",
+        "source": "Off",
+        "ko": "끄기",
+    },
+    {
+        "key": "0D9E1FDA4C51A50B250D1EA0CA569138",
+        "source": "On",
+        "ko": "켜기",
+    },
+]
 
 
 def patch_pyuepak_oodle_nullable_args() -> None:
@@ -145,6 +195,17 @@ def write_fstring(text: str) -> bytes:
     except UnicodeEncodeError:
         raw = text.encode("utf-16le") + b"\0\0"
         return struct.pack("<i", -(len(raw) // 2)) + raw
+
+
+def source_hash(text: str) -> int:
+    return zlib.crc32(text.encode("utf-32le")) & 0xFFFFFFFF
+
+
+def text_key_hash(text: str) -> int:
+    if text == "":
+        return 0
+    hashed = cityhash.CityHash64(text.encode("utf-16le"))
+    return ((hashed & 0xFFFFFFFF) + (((hashed >> 32) & 0xFFFFFFFF) * 23)) & 0xFFFFFFFF
 
 
 def align(value: int, alignment: int = AES_ALIGNMENT) -> int:
@@ -619,33 +680,50 @@ def main() -> None:
         for r in locres_records
     ]
     englishsource_locres_meta = load_optional_json(ENGLISHSOURCE_LOCRES_META_CANDIDATES)
-    existing_es_keys = {entry["key"] for entry in safe_entries if entry["namespace"] == "EnglishSource"}
-    union_entries = list(safe_entries)
+    union_entries_by_ns_key = {(entry["namespace"], entry["key"]): entry for entry in safe_entries}
     uasset_only_added = 0
-    uasset_collision_not_added = 0
+    uasset_collision_overridden = 0
+    uasset_placeholder_preserved = 0
     missing_locres_meta = []
     for record in uasset_records:
-        if record["key"] in existing_es_keys:
-            uasset_collision_not_added += 1
+        entry_key = ("EnglishSource", record["key"])
+        if record["source"] == "Placeholder text":
+            uasset_placeholder_preserved += int(entry_key in union_entries_by_ns_key)
             continue
         meta = englishsource_locres_meta.get(record["key"])
         if not meta:
             missing_locres_meta.append(record["key"])
             continue
-        union_entries.append(
-            {
-                "namespace": "EnglishSource",
-                "key": record["key"],
-                "key_hash": meta["key_hash"],
-                "source_hash": meta["source_hash"],
-                "ko": record.get("ko") or record["source"],
-            }
-        )
-        existing_es_keys.add(record["key"])
-        uasset_only_added += 1
+        uasset_entry = {
+            "namespace": "EnglishSource",
+            "key": record["key"],
+            "key_hash": meta["key_hash"],
+            "source_hash": source_hash(record["source"]),
+            "ko": record.get("ko") or record["source"],
+        }
+        if entry_key in union_entries_by_ns_key:
+            uasset_collision_overridden += 1
+        else:
+            uasset_only_added += 1
+        union_entries_by_ns_key[entry_key] = uasset_entry
     if missing_locres_meta:
         raise RuntimeError(f"missing EnglishSource locres metadata entries: {len(missing_locres_meta)}")
 
+    for extra in EXTRA_ENGLISHSOURCE_LOCRES_ENTRIES:
+        entry_key = ("EnglishSource", extra["key"])
+        if entry_key not in union_entries_by_ns_key:
+            uasset_only_added += 1
+        else:
+            uasset_collision_overridden += 1
+        union_entries_by_ns_key[entry_key] = {
+            "namespace": "EnglishSource",
+            "key": extra["key"],
+            "key_hash": text_key_hash(extra["key"]),
+            "source_hash": source_hash(extra["source"]),
+            "ko": extra["ko"],
+        }
+
+    union_entries = list(union_entries_by_ns_key.values())
     locres = build_locres(namespaces, union_entries)
     locres_path = DIST / "Game.ko.locres"
     locres_path.write_bytes(locres)
@@ -670,7 +748,8 @@ def main() -> None:
         "uasset_records": len(uasset_records),
         "locres_entries_built": len(union_entries),
         "locres_uasset_only_added": uasset_only_added,
-        "locres_uasset_collision_not_added": uasset_collision_not_added,
+        "locres_uasset_collision_overridden": uasset_collision_overridden,
+        "locres_uasset_placeholder_preserved": uasset_placeholder_preserved,
         "englishsource_strategy": "direct-uasset-iostore",
         "englishsource_uasset": uasset_summary,
         "englishsource_iostore": englishsource_summary,
