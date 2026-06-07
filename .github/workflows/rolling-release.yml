@@ -1,0 +1,67 @@
+name: Rolling Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Validate translations
+        run: python scripts/validate/translations.py
+      - name: Decrypt raw inputs if needed
+        env:
+          RAW_PACK_PASSPHRASE: ${{ secrets.RAW_PACK_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          if [[ -f raw/game/pakchunk0-Windows.pak ]]; then
+            echo "using plaintext raw inputs"
+            exit 0
+          fi
+          if [[ ! -f raw/private_inputs.tar.gpg ]]; then
+            echo "missing raw/game/pakchunk0-Windows.pak and raw/private_inputs.tar.gpg" >&2
+            exit 1
+          fi
+          if [[ -z "${RAW_PACK_PASSPHRASE:-}" ]]; then
+            echo "RAW_PACK_PASSPHRASE secret is required to decrypt raw/private_inputs.tar.gpg" >&2
+            exit 1
+          fi
+          gpg --batch --yes --passphrase "$RAW_PACK_PASSPHRASE" \
+            -o raw/private_inputs.tar \
+            -d raw/private_inputs.tar.gpg
+          tar -C raw -xf raw/private_inputs.tar
+          rm -f raw/private_inputs.tar
+      - name: Build patch
+        run: python scripts/build/build_locres_patch.py
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ITR2_Korean_Rolling
+          path: dist/ITR2_Korean_Rolling.zip
+      - name: Update rolling release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git tag -f rolling
+          git push origin rolling --force
+          if gh release view rolling >/dev/null 2>&1; then
+            gh release upload rolling dist/ITR2_Korean_Rolling.zip dist/build_summary.json --clobber
+          else
+            gh release create rolling dist/ITR2_Korean_Rolling.zip dist/build_summary.json \
+              --title "Rolling Korean Patch" \
+              --notes "Automatically rebuilt from main."
+          fi

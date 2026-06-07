@@ -1,0 +1,10 @@
+__pycache__/
+.venv/
+/dist/
+/build/
+/work/
+
+# Plain raw game inputs are local/CI-only. Commit encrypted raw bundles instead.
+raw/*
+!raw/.gitkeep
+!raw/*.gpg

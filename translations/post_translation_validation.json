@@ -1,0 +1,15 @@
+{
+  "expected_translatable": 3427,
+  "translated_rows": 3427,
+  "missing": 0,
+  "duplicates": 0,
+  "placeholder_issues": 0,
+  "latin_residue_rows_heuristic": 11,
+  "total_unique_with_non_translatable": 3535,
+  "records_with_ko": 5465,
+  "paths": {
+    "unique_sources_with_ko": "work/translation_targets/unique_sources_with_ko.json",
+    "records_with_ko": "work/translation_targets/records_with_ko.json",
+    "translations_translatable_only": "work/translation_targets/translations_ko_translatable_only.json"
+  }
+}
