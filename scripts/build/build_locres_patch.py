@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "raw"
 DIST = ROOT / "dist"
 RECORDS = ROOT / "translations" / "records_with_ko.json"
+INSTALLER_DIR = ROOT / "scripts" / "install"
 
 BASE_PAK_CANDIDATES = [
     RAW / "game" / "pakchunk0-Windows.pak",
@@ -243,6 +244,47 @@ def copy_prebuilt() -> list[Path]:
     return copied
 
 
+def write_release_readme() -> Path:
+    path = DIST / "README_KO.txt"
+    path.write_text(
+        "\n".join(
+            [
+                "Into the Radius 2 한국어 패치",
+                "",
+                "설치 방법:",
+                "1. ITR2_Korean.zip의 압축을 완전히 풉니다.",
+                "2. install.bat를 실행합니다.",
+                "3. 자동 설치가 실패하면 아래 파일들을 IntoTheRadius2/Content/Paks 폴더에 직접 복사합니다.",
+                "",
+                "복사할 파일:",
+                "- pakchunk99-KO_LocresUnionPreserve_P.pak",
+                "- pakchunk100-KO_NotoSansKRFonts_P.pak",
+                "- pakchunk999-Windows_P.pak",
+                "- pakchunk999-Windows_P.utoc",
+                "- pakchunk999-Windows_P.ucas",
+                "",
+                "주의:",
+                "- 기존의 pakchunk99-KO_UAsset-Windows.* 파일은 오래된 실험판입니다. install.ps1은 해당 파일이 있으면 비활성화합니다.",
+                "- 게임을 실행 중이라면 종료한 뒤 설치하세요.",
+                "- 설치 후에도 일부 이미지 표지판이나 하드코딩 UI 텍스트는 영어로 남을 수 있습니다.",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def copy_installer() -> list[Path]:
+    files = []
+    for name in ["install.bat", "install.ps1"]:
+        src = INSTALLER_DIR / name
+        dst = DIST / name
+        shutil.copy2(src, dst)
+        files.append(dst)
+    return files
+
+
 def main() -> None:
     patch_pyuepak_oodle_nullable_args()
     DIST.mkdir(parents=True, exist_ok=True)
@@ -301,26 +343,12 @@ def main() -> None:
     pak_path = make_pak("pakchunk99-KO_LocresUnionPreserve_P.pak", union_locres, locmeta)
     prebuilt_files = copy_prebuilt()
 
-    readme = DIST / "README_KO.txt"
-    readme.write_text(
-        "\n".join(
-            [
-                "Into the Radius 2 Korean rolling build",
-                "",
-                "Install all pak/utoc/ucas files in this zip into IntoTheRadius2/Content/Paks.",
-                "",
-                "Generated files:",
-                "- pakchunk99-KO_LocresUnionPreserve_P.pak",
-                "- optional prebuilt Korean font/UI font override files from raw/prebuilt",
-            ]
-        )
-        + "\n",
-        encoding="utf-8",
-    )
+    readme = write_release_readme()
+    installer_files = copy_installer()
 
-    zip_path = DIST / "ITR2_Korean_Rolling.zip"
+    zip_path = DIST / "ITR2_Korean.zip"
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
-        for path in [pak_path, *prebuilt_files, readme]:
+        for path in [pak_path, *prebuilt_files, readme, *installer_files]:
             zf.write(path, path.name)
 
     summary = {
@@ -335,7 +363,7 @@ def main() -> None:
                 "size": path.stat().st_size,
                 "sha1": hashlib.sha1(path.read_bytes()).hexdigest(),
             }
-            for path in [locres_path, pak_path, *prebuilt_files, zip_path]
+            for path in [locres_path, pak_path, *prebuilt_files, readme, *installer_files, zip_path]
         },
     }
     (DIST / "build_summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")

@@ -1,4 +1,4 @@
-name: Rolling Release
+name: Release
 
 on:
   push:
@@ -49,19 +49,20 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ITR2_Korean_Rolling
-          path: dist/ITR2_Korean_Rolling.zip
-      - name: Update rolling release
+          name: ITR2_Korean
+          path: dist/ITR2_Korean.zip
+      - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          git tag -f rolling
-          git push origin rolling --force
-          if gh release view rolling >/dev/null 2>&1; then
-            gh release upload rolling dist/ITR2_Korean_Rolling.zip dist/build_summary.json --clobber
-          else
-            gh release create rolling dist/ITR2_Korean_Rolling.zip dist/build_summary.json \
-              --title "Rolling Korean Patch" \
-              --notes "Automatically rebuilt from main."
-          fi
+          SHORT_SHA="$(git rev-parse --short=7 HEAD)"
+          STAMP="$(date -u +%Y%m%d%H%M%S)"
+          TAG="ITR2_Korean-${STAMP}-${SHORT_SHA}"
+          TITLE="ITR2_Korean (${SHORT_SHA})"
+
+          git tag "$TAG"
+          git push origin "$TAG"
+          gh release create "$TAG" dist/ITR2_Korean.zip dist/build_summary.json \
+            --title "$TITLE" \
+            --notes "main ${GITHUB_SHA} 기준으로 자동 빌드된 Into the Radius 2 한국어 패치입니다."
