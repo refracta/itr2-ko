@@ -121,6 +121,31 @@ raw/
 
 `raw/prebuilt/` 파일은 한국어 폰트와 UI 폰트 override입니다. 번역문만 수정하는 경우 다시 만들 필요가 없습니다.
 
+## 키보드/마우스 VR 테스트 드라이버
+
+VR 착용 없이 번역 UI, 자막, 표지판을 빠르게 확인하기 위한 SteamVR fake HMD 도구를 `tools/vr-kbm-test-driver/`에 포함했습니다. 번역 패치 검증 비용을 낮추기 위한 유지보수용 도구입니다.
+
+빌드/설치:
+
+```powershell
+& ".\tools\vr-kbm-test-driver\scripts\build-driver.ps1"
+```
+
+테스트 모드 실행:
+
+```powershell
+& ".\tools\vr-kbm-test-driver\scripts\start-itr2-kbm-test.ps1" `
+  -GameRoot "C:\Program Files (x86)\Steam\steamapps\common\IntoTheRadius2"
+```
+
+Virtual Desktop/일반 HMD 모드로 원복:
+
+```powershell
+& ".\tools\vr-kbm-test-driver\scripts\restore-virtual-desktop-mode.ps1" -StopProcesses
+```
+
+이 도구는 SteamVR 전역 설정의 `forcedDriver`를 바꾸므로 테스트 후 반드시 원복해야 합니다. 자세한 사용법은 `tools/vr-kbm-test-driver/README.md`를 참고하세요.
+
 ## 현재 패치 적용 원리
 
 현재 패치는 세 갈래로 적용됩니다.
