@@ -6,8 +6,13 @@ The CI build treats `raw/` as the canonical input directory. Other maintainers c
 raw/
   game/
     pakchunk0-Windows.pak
-  references/
-    japanese_entries.json
+  base/
+    EnglishSource.uasset.raw
+  templates/
+    russian_translation_mod/
+      pakchunk10-Windows.pak
+      pakchunk10-Windows.utoc
+      pakchunk10-Windows.ucas
   prebuilt/
     pakchunk100-KO_NotoSansKRFonts_P.pak
     pakchunk999-Windows_P.pak
@@ -17,7 +22,9 @@ raw/
 
 `pakchunk0-Windows.pak` is used only to read the original `Game.locres` and `Game.locmeta`.
 
-`japanese_entries.json` is used as metadata for uasset-only `EnglishSource` keys added to the union locres patch.
+`base/EnglishSource.uasset.raw` is the original extracted `ITR2/Configurations/Localization/EnglishSource.uasset` export bundle. It is patched directly so `EnglishSource.uasset` strings do not depend on the locres workaround.
+
+`templates/russian_translation_mod/pakchunk10-Windows.*` is a small IoStore template for packaging the patched `EnglishSource.uasset` back into a loadable mod container.
 
 The `prebuilt/` files are the current Korean font/UI font override assets. Translation-only PRs do not need to rebuild them.
 

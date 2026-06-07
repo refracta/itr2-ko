@@ -38,7 +38,10 @@ IntoTheRadius2/Content/Paks
 설치 대상 파일:
 
 ```text
-pakchunk99-KO_LocresUnionPreserve_P.pak
+pakchunk99-KO_Locres_P.pak
+pakchunk98-KO_EnglishSource-Windows_P.pak
+pakchunk98-KO_EnglishSource-Windows_P.utoc
+pakchunk98-KO_EnglishSource-Windows_P.ucas
 pakchunk100-KO_NotoSansKRFonts_P.pak
 pakchunk999-Windows_P.pak
 pakchunk999-Windows_P.utoc
@@ -51,7 +54,10 @@ pakchunk999-Windows_P.ucas
 
 ```text
 raw/game/pakchunk0-Windows.pak
-raw/references/japanese_entries.json
+raw/base/EnglishSource.uasset.raw
+raw/templates/russian_translation_mod/pakchunk10-Windows.pak
+raw/templates/russian_translation_mod/pakchunk10-Windows.utoc
+raw/templates/russian_translation_mod/pakchunk10-Windows.ucas
 raw/prebuilt/pakchunk100-KO_NotoSansKRFonts_P.pak
 raw/prebuilt/pakchunk999-Windows_P.pak
 raw/prebuilt/pakchunk999-Windows_P.utoc

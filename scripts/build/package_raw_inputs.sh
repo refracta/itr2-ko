@@ -11,7 +11,10 @@ cd "$repo_root"
 
 for required in \
   raw/game/pakchunk0-Windows.pak \
-  raw/references/japanese_entries.json \
+  raw/base/EnglishSource.uasset.raw \
+  raw/templates/russian_translation_mod/pakchunk10-Windows.pak \
+  raw/templates/russian_translation_mod/pakchunk10-Windows.utoc \
+  raw/templates/russian_translation_mod/pakchunk10-Windows.ucas \
   raw/prebuilt/pakchunk100-KO_NotoSansKRFonts_P.pak \
   raw/prebuilt/pakchunk999-Windows_P.pak \
   raw/prebuilt/pakchunk999-Windows_P.utoc \
@@ -23,7 +26,7 @@ do
   fi
 done
 
-tar -C raw -cf - game references prebuilt \
+tar -C raw -cf - game base templates prebuilt \
   | gpg --batch --yes --symmetric --cipher-algo AES256 \
       --passphrase "$RAW_PACK_PASSPHRASE" \
       -o raw/private_inputs.tar.gpg

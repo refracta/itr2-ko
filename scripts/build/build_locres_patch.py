@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import shutil
 import struct
 import zipfile
@@ -20,15 +21,24 @@ RAW = ROOT / "raw"
 DIST = ROOT / "dist"
 RECORDS = ROOT / "translations" / "records_with_ko.json"
 INSTALLER_DIR = ROOT / "scripts" / "install"
+LOCRES_BASENAME = "pakchunk99-KO_Locres_P.pak"
+ENGLISHSOURCE_BASENAME = "pakchunk98-KO_EnglishSource-Windows_P"
+EXPORT_SERIAL_SIZE_OFFSET = 0xD0
+FIRST_FSTRING_RELATIVE_OFFSET = 2
+AES_ALIGNMENT = 16
 
 BASE_PAK_CANDIDATES = [
     RAW / "game" / "pakchunk0-Windows.pak",
     RAW / "pakchunk0-Windows.pak",
     RAW / "IntoTheRadius2" / "Content" / "Paks" / "pakchunk0-Windows.pak",
 ]
-JAPANESE_ENTRIES_CANDIDATES = [
-    RAW / "references" / "japanese_entries.json",
-    RAW / "japanese_entries.json",
+BASE_ENGLISHSOURCE_CANDIDATES = [
+    RAW / "base" / "EnglishSource.uasset.raw",
+    RAW / "base_EnglishSource.uasset.raw",
+]
+ENGLISHSOURCE_TEMPLATE_DIR_CANDIDATES = [
+    RAW / "templates" / "russian_translation_mod",
+    RAW / "russian_translation_mod",
 ]
 
 GAME_LOCRES_PATH = "IntoTheRadius2/Content/Localization/Game/en/Game.locres"
@@ -99,6 +109,29 @@ def write_fstring(text: str) -> bytes:
     except UnicodeEncodeError:
         raw = text.encode("utf-16le") + b"\0\0"
         return struct.pack("<i", -(len(raw) // 2)) + raw
+
+
+def align(value: int, alignment: int = AES_ALIGNMENT) -> int:
+    return (value + alignment - 1) // alignment * alignment
+
+
+def pack_offset_length(offset: int, length: int) -> bytes:
+    if offset >= 1 << 40 or length >= 1 << 40:
+        raise ValueError("IoStore offset/length exceeds 40-bit field")
+    return offset.to_bytes(5, "big") + length.to_bytes(5, "big")
+
+
+def pack_block(physical_offset: int, compressed_size: int, uncompressed_size: int, method: int) -> bytes:
+    if physical_offset >= 1 << 40:
+        raise ValueError("IoStore physical offset exceeds 40-bit field")
+    if compressed_size >= 1 << 24 or uncompressed_size >= 1 << 24:
+        raise ValueError("IoStore block size exceeds 24-bit field")
+    return (
+        physical_offset.to_bytes(5, "little")
+        + compressed_size.to_bytes(3, "little")
+        + uncompressed_size.to_bytes(3, "little")
+        + bytes([method])
+    )
 
 
 def extract_pak_file(pak_path: Path, logical_path: str) -> bytes:
@@ -217,6 +250,257 @@ def build_locres(namespaces: list[dict], entries: list[dict]) -> bytes:
     return bytes(body)
 
 
+def parse_template_utoc_layout(utoc: bytes) -> dict[str, int]:
+    header_size = struct.unpack_from("<I", utoc, 0x14)[0]
+    entry_count = struct.unpack_from("<I", utoc, 0x18)[0]
+    block_count = struct.unpack_from("<I", utoc, 0x1C)[0]
+    block_entry_size = struct.unpack_from("<I", utoc, 0x20)[0]
+    method_count = struct.unpack_from("<I", utoc, 0x24)[0]
+    method_name_len = struct.unpack_from("<I", utoc, 0x28)[0]
+    block_size = struct.unpack_from("<I", utoc, 0x2C)[0]
+    directory_size = struct.unpack_from("<I", utoc, 0x30)[0]
+
+    chunk_ids_start = header_size
+    chunk_ids_size = entry_count * 12
+    offset_lengths_start = chunk_ids_start + chunk_ids_size
+    offset_lengths_size = entry_count * 10
+    extra_start = offset_lengths_start + offset_lengths_size
+    extra_size = 4
+    block_table_start = extra_start + extra_size
+    method_table_start = block_table_start + block_count * block_entry_size
+    method_table_size = method_count * method_name_len
+    directory_start = method_table_start + method_table_size
+    meta_start = directory_start + directory_size
+
+    return {
+        "header_size": header_size,
+        "entry_count": entry_count,
+        "block_count": block_count,
+        "block_entry_size": block_entry_size,
+        "method_count": method_count,
+        "method_name_len": method_name_len,
+        "block_size": block_size,
+        "directory_size": directory_size,
+        "chunk_ids_start": chunk_ids_start,
+        "chunk_ids_size": chunk_ids_size,
+        "offset_lengths_start": offset_lengths_start,
+        "extra_start": extra_start,
+        "extra_size": extra_size,
+        "block_table_start": block_table_start,
+        "method_table_start": method_table_start,
+        "method_table_size": method_table_size,
+        "directory_start": directory_start,
+        "meta_start": meta_start,
+    }
+
+
+def read_iostore_offset_length(utoc: bytes, offset: int) -> tuple[int, int]:
+    raw = utoc[offset : offset + 10]
+    return int.from_bytes(raw[:5], "big"), int.from_bytes(raw[5:], "big")
+
+
+def read_iostore_entry(utoc: bytes, ucas: bytes, entry_index: int) -> bytes:
+    layout = parse_template_utoc_layout(utoc)
+    block_size = layout["block_size"]
+    offset_length_offset = layout["offset_lengths_start"] + entry_index * 10
+    logical_offset, logical_length = read_iostore_offset_length(utoc, offset_length_offset)
+    first_block = logical_offset // block_size
+    last_block = (align(logical_offset + logical_length, block_size) - 1) // block_size
+    offset_in_block = logical_offset % block_size
+    remaining = logical_length
+    output = bytearray()
+    for block_index in range(first_block, last_block + 1):
+        block_offset = layout["block_table_start"] + block_index * layout["block_entry_size"]
+        block = utoc[block_offset : block_offset + layout["block_entry_size"]]
+        physical_offset = int.from_bytes(block[:5], "little")
+        compressed_size = int.from_bytes(block[5:8], "little")
+        uncompressed_size = int.from_bytes(block[8:11], "little")
+        method = block[11]
+        if method != 0:
+            raise RuntimeError("roundtrip reader only supports uncompressed blocks")
+        src = ucas[physical_offset : physical_offset + compressed_size]
+        if len(src) != uncompressed_size:
+            raise RuntimeError("uncompressed block size mismatch")
+        take = min(block_size - offset_in_block, remaining)
+        output += src[offset_in_block : offset_in_block + take]
+        remaining -= take
+        offset_in_block = 0
+    return bytes(output)
+
+
+def patch_englishsource_uasset(records: list[dict]) -> tuple[bytes, dict]:
+    raw_path = first_existing(BASE_ENGLISHSOURCE_CANDIDATES)
+    raw = bytearray(raw_path.read_bytes())
+    uasset_records = sorted(
+        (r for r in records if r["container"] == "EnglishSource.uasset"),
+        key=lambda r: r["text_offset"],
+    )
+    if not uasset_records:
+        raise RuntimeError("no EnglishSource.uasset records found")
+
+    for record in uasset_records:
+        parsed, end = read_fstring(raw, record["text_offset"])
+        if parsed != record["source"] or end != record["end"]:
+            raise RuntimeError(
+                "EnglishSource raw does not match translation offsets: "
+                f"{record['key']} parsed={parsed!r} expected={record['source']!r}"
+            )
+
+    original_serial_size = struct.unpack_from("<Q", raw, EXPORT_SERIAL_SIZE_OFFSET)[0]
+    serial_start = len(raw) - original_serial_size
+    rebuilt = bytearray()
+    cursor = 0
+    encoded_sizes = []
+    translated_count = 0
+
+    for record in uasset_records:
+        text = record.get("ko") or record["source"]
+        rebuilt += raw[cursor : record["text_offset"]]
+        encoded = write_fstring(text)
+        rebuilt += encoded
+        cursor = record["end"]
+        encoded_sizes.append(len(encoded))
+        if text != record["source"]:
+            translated_count += 1
+    rebuilt += raw[cursor:]
+
+    new_serial_size = len(rebuilt) - serial_start
+    struct.pack_into("<Q", rebuilt, EXPORT_SERIAL_SIZE_OFFSET, new_serial_size)
+
+    namespace_offset = serial_start + FIRST_FSTRING_RELATIVE_OFFSET
+    namespace, offset = read_fstring(rebuilt, namespace_offset)
+    (entry_count,) = struct.unpack_from("<i", rebuilt, offset)
+    offset += 4
+    parsed_translations = {}
+    for _ in range(entry_count):
+        key, offset = read_fstring(rebuilt, offset)
+        text, offset = read_fstring(rebuilt, offset)
+        parsed_translations[key] = text
+
+    expected = {r["key"]: r.get("ko") or r["source"] for r in uasset_records}
+    mismatches = [key for key, text in expected.items() if parsed_translations.get(key) != text]
+    if namespace != "EnglishSource" or entry_count != len(uasset_records) or mismatches:
+        raise RuntimeError(
+            "patched EnglishSource parse check failed: "
+            f"namespace={namespace!r}, entry_count={entry_count}, mismatches={len(mismatches)}"
+        )
+
+    return bytes(rebuilt), {
+        "input": str(raw_path),
+        "uasset_entries": len(uasset_records),
+        "translated_or_changed_entries": translated_count,
+        "original_size": len(raw),
+        "patched_size": len(rebuilt),
+        "original_serial_size": original_serial_size,
+        "patched_serial_size": new_serial_size,
+        "sha1": hashlib.sha1(rebuilt).hexdigest(),
+        "encoded_fstring_bytes": {
+            "min": min(encoded_sizes),
+            "max": max(encoded_sizes),
+            "sum": sum(encoded_sizes),
+        },
+    }
+
+
+def read_template_entry1_payload(utoc: bytes, ucas: bytes, layout: dict[str, int]) -> bytes:
+    block_start = layout["block_table_start"]
+    block_size = layout["block_entry_size"]
+    old_block_count = layout["block_count"]
+    block = utoc[
+        block_start + (old_block_count - 1) * block_size : block_start + old_block_count * block_size
+    ]
+    physical_offset = int.from_bytes(block[:5], "little")
+    compressed_size = int.from_bytes(block[5:8], "little")
+    method = block[11]
+    if method != 0:
+        raise RuntimeError("template entry1 payload is unexpectedly compressed")
+    return ucas[physical_offset : physical_offset + compressed_size]
+
+
+def build_englishsource_iostore(patched_uasset: bytes) -> tuple[list[Path], dict]:
+    template_dir = first_existing(ENGLISHSOURCE_TEMPLATE_DIR_CANDIDATES)
+    template_pak = template_dir / "pakchunk10-Windows.pak"
+    template_utoc = template_dir / "pakchunk10-Windows.utoc"
+    template_ucas = template_dir / "pakchunk10-Windows.ucas"
+    for path in [template_pak, template_utoc, template_ucas]:
+        if not path.exists():
+            raise FileNotFoundError(path)
+
+    utoc = bytearray(template_utoc.read_bytes())
+    ucas_template = template_ucas.read_bytes()
+    layout = parse_template_utoc_layout(utoc)
+    if layout["entry_count"] != 2 or layout["block_entry_size"] != 12:
+        raise RuntimeError(f"unexpected EnglishSource template layout: {layout}")
+
+    block_size = layout["block_size"]
+    entry0_length = len(patched_uasset)
+    entry0_blocks = max(1, math.ceil(entry0_length / block_size))
+    entry1_offset = entry0_blocks * block_size
+    entry1_payload = read_template_entry1_payload(utoc, ucas_template, layout)
+    entry1_length = len(entry1_payload)
+    block_entries = []
+    ucas = bytearray()
+
+    for block_index in range(entry0_blocks):
+        block = patched_uasset[block_index * block_size : (block_index + 1) * block_size]
+        physical_offset = len(ucas)
+        ucas += block
+        ucas += b"\0" * (align(len(ucas)) - len(ucas))
+        block_entries.append(pack_block(physical_offset, len(block), len(block), 0))
+
+    physical_offset = len(ucas)
+    ucas += entry1_payload
+    ucas += b"\0" * (align(len(ucas)) - len(ucas))
+    block_entries.append(pack_block(physical_offset, entry1_length, entry1_length, 0))
+
+    struct.pack_into("<I", utoc, 0x1C, len(block_entries))
+    header = bytes(utoc[: layout["header_size"]])
+    chunk_ids = bytes(utoc[layout["chunk_ids_start"] : layout["chunk_ids_start"] + layout["chunk_ids_size"]])
+    offset_lengths = pack_offset_length(0, entry0_length) + pack_offset_length(entry1_offset, entry1_length)
+    extra = bytes(utoc[layout["extra_start"] : layout["extra_start"] + layout["extra_size"]])
+    methods = bytes(utoc[layout["method_table_start"] : layout["method_table_start"] + layout["method_table_size"]])
+    directory = bytes(utoc[layout["directory_start"] : layout["directory_start"] + layout["directory_size"]])
+    old_meta = bytes(utoc[layout["meta_start"] :])
+    if len(old_meta) == 48:
+        meta = (
+            hashlib.sha1(patched_uasset).digest()
+            + b"\0\0\0\0"
+            + hashlib.sha1(entry1_payload).digest()
+            + b"\0\0\0\0"
+        )
+    else:
+        meta = old_meta
+
+    new_utoc = header + chunk_ids + offset_lengths + extra + b"".join(block_entries) + methods + directory + meta
+    pak_out = DIST / f"{ENGLISHSOURCE_BASENAME}.pak"
+    utoc_out = DIST / f"{ENGLISHSOURCE_BASENAME}.utoc"
+    ucas_out = DIST / f"{ENGLISHSOURCE_BASENAME}.ucas"
+    shutil.copy2(template_pak, pak_out)
+    utoc_out.write_bytes(new_utoc)
+    ucas_out.write_bytes(bytes(ucas))
+
+    roundtrip = read_iostore_entry(utoc_out.read_bytes(), ucas_out.read_bytes(), entry_index=0)
+    if roundtrip != patched_uasset:
+        raise RuntimeError("EnglishSource IoStore roundtrip validation failed")
+
+    files = [pak_out, utoc_out, ucas_out]
+    return files, {
+        "basename": ENGLISHSOURCE_BASENAME,
+        "template": str(template_dir),
+        "entry0_length": entry0_length,
+        "entry1_length": entry1_length,
+        "entry0_blocks": entry0_blocks,
+        "block_count": len(block_entries),
+        "files": {
+            path.name: {
+                "size": path.stat().st_size,
+                "sha1": hashlib.sha1(path.read_bytes()).hexdigest(),
+            }
+            for path in files
+        },
+    }
+
+
 def make_pak(name: str, locres: bytes, locmeta: bytes) -> Path:
     pak = PakFile()
     pak.version = PakVersion.V11
@@ -257,16 +541,19 @@ def write_release_readme() -> Path:
                 "3. 자동 설치가 실패하면 아래 파일들을 IntoTheRadius2/Content/Paks 폴더에 직접 복사합니다.",
                 "",
                 "복사할 파일:",
-                "- pakchunk99-KO_LocresUnionPreserve_P.pak",
+                "- pakchunk99-KO_Locres_P.pak",
+                "- pakchunk98-KO_EnglishSource-Windows_P.pak",
+                "- pakchunk98-KO_EnglishSource-Windows_P.utoc",
+                "- pakchunk98-KO_EnglishSource-Windows_P.ucas",
                 "- pakchunk100-KO_NotoSansKRFonts_P.pak",
                 "- pakchunk999-Windows_P.pak",
                 "- pakchunk999-Windows_P.utoc",
                 "- pakchunk999-Windows_P.ucas",
                 "",
                 "주의:",
-                "- 기존의 pakchunk99-KO_UAsset-Windows.* 파일은 오래된 실험판입니다. install.ps1은 해당 파일이 있으면 비활성화합니다.",
+                "- 기존의 pakchunk99-KO_LocresUnionPreserve_P.pak 및 pakchunk99-KO_UAsset-Windows.* 파일은 오래된 실험판입니다. install.ps1은 해당 파일이 있으면 비활성화합니다.",
                 "- 게임을 실행 중이라면 종료한 뒤 설치하세요.",
-                "- 설치 후에도 일부 이미지 표지판이나 하드코딩 UI 텍스트는 영어로 남을 수 있습니다.",
+                "- 설치 후에도 일부 이미지 표지판이나 진짜 하드코딩 UI 텍스트는 영어로 남을 수 있습니다.",
             ]
         )
         + "\n",
@@ -307,40 +594,14 @@ def main() -> None:
         for r in locres_records
     ]
 
-    ja_path = next((p for p in JAPANESE_ENTRIES_CANDIDATES if p.exists()), None)
-    ja_es_meta = {}
-    if ja_path:
-        ja_entries = load_json(ja_path)
-        ja_es_meta = {
-            e["key"]: {"key_hash": e["key_hash"], "source_hash": e["source_hash"]}
-            for e in ja_entries
-            if e["namespace"] == "EnglishSource"
-        }
-
-    existing_es_keys = {e["key"] for e in safe_entries if e["namespace"] == "EnglishSource"}
-    union_entries = list(safe_entries)
-    skipped_without_meta = 0
-    for r in uasset_records:
-        if r["key"] in existing_es_keys:
-            continue
-        meta = ja_es_meta.get(r["key"])
-        if not meta:
-            skipped_without_meta += 1
-            continue
-        union_entries.append(
-            {
-                "namespace": "EnglishSource",
-                "key": r["key"],
-                "key_hash": meta["key_hash"],
-                "source_hash": meta["source_hash"],
-                "ko": r.get("ko") or r["source"],
-            }
-        )
-
-    union_locres = build_locres(namespaces, union_entries)
-    locres_path = DIST / "Game.ko.union-preserve-locres.locres"
-    locres_path.write_bytes(union_locres)
-    pak_path = make_pak("pakchunk99-KO_LocresUnionPreserve_P.pak", union_locres, locmeta)
+    locres = build_locres(namespaces, safe_entries)
+    locres_path = DIST / "Game.ko.locres"
+    locres_path.write_bytes(locres)
+    pak_path = make_pak(LOCRES_BASENAME, locres, locmeta)
+    patched_uasset, uasset_summary = patch_englishsource_uasset(records)
+    patched_uasset_path = DIST / "EnglishSource.ko.uasset.raw"
+    patched_uasset_path.write_bytes(patched_uasset)
+    englishsource_files, englishsource_summary = build_englishsource_iostore(patched_uasset)
     prebuilt_files = copy_prebuilt()
 
     readme = write_release_readme()
@@ -348,22 +609,32 @@ def main() -> None:
 
     zip_path = DIST / "ITR2_Korean.zip"
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
-        for path in [pak_path, *prebuilt_files, readme, *installer_files]:
+        for path in [pak_path, *englishsource_files, *prebuilt_files, readme, *installer_files]:
             zf.write(path, path.name)
 
     summary = {
         "base_pak": str(base_pak),
         "locres_entries": len(locres_records),
         "uasset_records": len(uasset_records),
-        "union_entries": len(union_entries),
-        "uasset_only_added": len(union_entries) - len(safe_entries),
-        "uasset_only_skipped_without_reference_meta": skipped_without_meta,
+        "locres_entries_built": len(safe_entries),
+        "englishsource_strategy": "direct-uasset-iostore",
+        "englishsource_uasset": uasset_summary,
+        "englishsource_iostore": englishsource_summary,
         "files": {
             path.name: {
                 "size": path.stat().st_size,
                 "sha1": hashlib.sha1(path.read_bytes()).hexdigest(),
             }
-            for path in [locres_path, pak_path, *prebuilt_files, readme, *installer_files, zip_path]
+            for path in [
+                locres_path,
+                pak_path,
+                patched_uasset_path,
+                *englishsource_files,
+                *prebuilt_files,
+                readme,
+                *installer_files,
+                zip_path,
+            ]
         },
     }
     (DIST / "build_summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
