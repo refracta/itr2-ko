@@ -37,6 +37,10 @@ BASE_ENGLISHSOURCE_CANDIDATES = [
     RAW / "base" / "EnglishSource.uasset.raw",
     RAW / "base_EnglishSource.uasset.raw",
 ]
+ENGLISHSOURCE_LOCRES_META_CANDIDATES = [
+    RAW / "base" / "EnglishSource.locres_meta.json",
+    RAW / "base_EnglishSource.locres_meta.json",
+]
 
 GAME_LOCRES_PATH = "IntoTheRadius2/Content/Localization/Game/en/Game.locres"
 GAME_LOCMETA_PATH = "IntoTheRadius2/Content/Localization/Game/Game.locmeta"
@@ -110,6 +114,13 @@ def first_existing(paths: list[Path]) -> Path:
 def load_json(path: Path):
     with path.open(encoding="utf-8") as f:
         return json.load(f)
+
+
+def load_optional_json(path_candidates: list[Path]):
+    for path in path_candidates:
+        if path.exists():
+            return load_json(path)
+    raise FileNotFoundError("missing any of: " + ", ".join(str(p) for p in path_candidates))
 
 
 def read_fstring(data: bytes, offset: int) -> tuple[str, int]:
@@ -607,8 +618,35 @@ def main() -> None:
         }
         for r in locres_records
     ]
+    englishsource_locres_meta = load_optional_json(ENGLISHSOURCE_LOCRES_META_CANDIDATES)
+    existing_es_keys = {entry["key"] for entry in safe_entries if entry["namespace"] == "EnglishSource"}
+    union_entries = list(safe_entries)
+    uasset_only_added = 0
+    uasset_collision_not_added = 0
+    missing_locres_meta = []
+    for record in uasset_records:
+        if record["key"] in existing_es_keys:
+            uasset_collision_not_added += 1
+            continue
+        meta = englishsource_locres_meta.get(record["key"])
+        if not meta:
+            missing_locres_meta.append(record["key"])
+            continue
+        union_entries.append(
+            {
+                "namespace": "EnglishSource",
+                "key": record["key"],
+                "key_hash": meta["key_hash"],
+                "source_hash": meta["source_hash"],
+                "ko": record.get("ko") or record["source"],
+            }
+        )
+        existing_es_keys.add(record["key"])
+        uasset_only_added += 1
+    if missing_locres_meta:
+        raise RuntimeError(f"missing EnglishSource locres metadata entries: {len(missing_locres_meta)}")
 
-    locres = build_locres(namespaces, safe_entries)
+    locres = build_locres(namespaces, union_entries)
     locres_path = DIST / "Game.ko.locres"
     locres_path.write_bytes(locres)
     pak_path = make_pak(LOCRES_BASENAME, locres, locmeta)
@@ -630,7 +668,9 @@ def main() -> None:
         "base_pak": str(base_pak),
         "locres_entries": len(locres_records),
         "uasset_records": len(uasset_records),
-        "locres_entries_built": len(safe_entries),
+        "locres_entries_built": len(union_entries),
+        "locres_uasset_only_added": uasset_only_added,
+        "locres_uasset_collision_not_added": uasset_collision_not_added,
         "englishsource_strategy": "direct-uasset-iostore",
         "englishsource_uasset": uasset_summary,
         "englishsource_iostore": englishsource_summary,

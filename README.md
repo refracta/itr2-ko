@@ -44,6 +44,7 @@ pakchunk999-Windows_P.ucas
 ```text
 raw/game/pakchunk0-Windows.pak
 raw/base/EnglishSource.uasset.raw
+raw/base/EnglishSource.locres_meta.json
 raw/prebuilt/pakchunk100-KO_NotoSansKRFonts_P.pak
 raw/prebuilt/pakchunk999-Windows_P.pak
 raw/prebuilt/pakchunk999-Windows_P.utoc
