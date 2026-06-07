@@ -5,9 +5,9 @@ Add-Type -AssemblyName System.Windows.Forms
 $AppId = "2307350"
 $PatchFiles = @(
     "pakchunk99-KO_Locres_P.pak",
-    "pakchunk98-KO_EnglishSource-Windows_P.pak",
-    "pakchunk98-KO_EnglishSource-Windows_P.utoc",
-    "pakchunk98-KO_EnglishSource-Windows_P.ucas",
+    "pakchunk99-KO_UAsset-Windows.pak",
+    "pakchunk99-KO_UAsset-Windows.utoc",
+    "pakchunk99-KO_UAsset-Windows.ucas",
     "pakchunk100-KO_NotoSansKRFonts_P.pak",
     "pakchunk999-Windows_P.pak",
     "pakchunk999-Windows_P.utoc",
@@ -16,9 +16,9 @@ $PatchFiles = @(
 
 $StaleFiles = @(
     "pakchunk99-KO_LocresUnionPreserve_P.pak",
-    "pakchunk99-KO_UAsset-Windows.pak",
-    "pakchunk99-KO_UAsset-Windows.utoc",
-    "pakchunk99-KO_UAsset-Windows.ucas"
+    "pakchunk98-KO_EnglishSource-Windows_P.pak",
+    "pakchunk98-KO_EnglishSource-Windows_P.utoc",
+    "pakchunk98-KO_EnglishSource-Windows_P.ucas"
 )
 
 function Get-SteamRoots {

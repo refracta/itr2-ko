@@ -28,9 +28,9 @@ IntoTheRadius2/Content/Paks
 
 ```text
 pakchunk99-KO_Locres_P.pak
-pakchunk98-KO_EnglishSource-Windows_P.pak
-pakchunk98-KO_EnglishSource-Windows_P.utoc
-pakchunk98-KO_EnglishSource-Windows_P.ucas
+pakchunk99-KO_UAsset-Windows.pak
+pakchunk99-KO_UAsset-Windows.utoc
+pakchunk99-KO_UAsset-Windows.ucas
 pakchunk100-KO_NotoSansKRFonts_P.pak
 pakchunk999-Windows_P.pak
 pakchunk999-Windows_P.utoc
@@ -44,9 +44,6 @@ pakchunk999-Windows_P.ucas
 ```text
 raw/game/pakchunk0-Windows.pak
 raw/base/EnglishSource.uasset.raw
-raw/templates/englishsource_iostore/pakchunk98-KO_EnglishSource-Windows_P.pak
-raw/templates/englishsource_iostore/pakchunk98-KO_EnglishSource-Windows_P.utoc
-raw/templates/englishsource_iostore/pakchunk98-KO_EnglishSource-Windows_P.ucas
 raw/prebuilt/pakchunk100-KO_NotoSansKRFonts_P.pak
 raw/prebuilt/pakchunk999-Windows_P.pak
 raw/prebuilt/pakchunk999-Windows_P.utoc

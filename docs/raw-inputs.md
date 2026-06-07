@@ -8,11 +8,6 @@ raw/
     pakchunk0-Windows.pak
   base/
     EnglishSource.uasset.raw
-  templates/
-    englishsource_iostore/
-      pakchunk98-KO_EnglishSource-Windows_P.pak
-      pakchunk98-KO_EnglishSource-Windows_P.utoc
-      pakchunk98-KO_EnglishSource-Windows_P.ucas
   prebuilt/
     pakchunk100-KO_NotoSansKRFonts_P.pak
     pakchunk999-Windows_P.pak
@@ -24,7 +19,7 @@ raw/
 
 `base/EnglishSource.uasset.raw`는 원본 게임에서 추출한 `ITR2/Configurations/Localization/EnglishSource.uasset` export bundle입니다. 이 파일을 직접 패치하므로 `EnglishSource.uasset` 문자열은 locres 우회 방식에 의존하지 않습니다.
 
-`templates/englishsource_iostore/`는 원본 게임의 `EnglishSource.uasset/.uexp`를 retoc으로 다시 패키징해서 만든 자체 IoStore 템플릿입니다. 러시아/일본어 모드 파일을 사용하지 않습니다.
+`EnglishSource.uasset`용 IoStore 컨테이너 메타데이터는 빌드 스크립트가 직접 생성합니다. 런타임 override에 필요한 mount path는 `../../../Projectc/Content/ITR2/Configurations/Localization/`입니다. 러시아/일본어 모드 파일을 사용하지 않습니다.
 
 `prebuilt/` 파일은 현재 한국어 폰트/UI 폰트 override입니다. 번역문만 수정하는 PR에서는 이 파일들을 다시 만들 필요가 없습니다.
 

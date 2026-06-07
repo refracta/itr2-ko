@@ -22,10 +22,11 @@ DIST = ROOT / "dist"
 RECORDS = ROOT / "translations" / "records_with_ko.json"
 INSTALLER_DIR = ROOT / "scripts" / "install"
 LOCRES_BASENAME = "pakchunk99-KO_Locres_P.pak"
-ENGLISHSOURCE_BASENAME = "pakchunk98-KO_EnglishSource-Windows_P"
+ENGLISHSOURCE_BASENAME = "pakchunk99-KO_UAsset-Windows"
 EXPORT_SERIAL_SIZE_OFFSET = 0xD0
 FIRST_FSTRING_RELATIVE_OFFSET = 2
 AES_ALIGNMENT = 16
+IOSTORE_BLOCK_SIZE = 65536
 
 BASE_PAK_CANDIDATES = [
     RAW / "game" / "pakchunk0-Windows.pak",
@@ -36,14 +37,38 @@ BASE_ENGLISHSOURCE_CANDIDATES = [
     RAW / "base" / "EnglishSource.uasset.raw",
     RAW / "base_EnglishSource.uasset.raw",
 ]
-ENGLISHSOURCE_TEMPLATE_DIR_CANDIDATES = [
-    RAW / "templates" / "englishsource_iostore",
-    RAW / "englishsource_iostore",
-]
 
 GAME_LOCRES_PATH = "IntoTheRadius2/Content/Localization/Game/en/Game.locres"
 GAME_LOCMETA_PATH = "IntoTheRadius2/Content/Localization/Game/Game.locmeta"
 MAGIC = bytes.fromhex("0e147475674a03fc4a15909dc3377f1b")
+PROJECTC_IOSTORE_HEADER = bytes.fromhex(
+    "2d3d3d2d2d3d3d2d2d3d3d2d2d3d3d2d08000000900000000200000006000000"
+    "0c0000000100000020000000000001008100000001000000a695fe34ff106667"
+    "000000000000000000000000000000000900000001000000ffffffffffffffff"
+    "0000000000000000000000000000000000000000000000000000000000000000"
+    "00000000000000000000000000000000"
+)
+PROJECTC_CHUNK_IDS = bytes.fromhex("de7d8cef4d05444100000001a695fe34ff10666700000006")
+PROJECTC_EXTRA = struct.pack("<I", 2)
+PROJECTC_METHODS = b"Oodle" + b"\0" * 27
+PROJECTC_ENTRY1_PAYLOAD = bytes.fromhex(
+    "6e436f4904000000a695fe34ff10666701000000de7d8cef4d054441"
+    "10000000000000000000000000000000000000000000000000000000"
+    "00000000000000000000000000000000"
+)
+PROJECTC_COMPANION_PAK = bytes.fromhex(
+    "020000002f00000000007d82ab1b00000000010000006a000000000000000800"
+    "00000000000005fe405753166f125559e7c9ac558654f107c7e9010000007200"
+    "00000000000004000000000000009069ca78e7450a285173431b3e52c5c25299"
+    "e473000000000000000000000000000000000000000000000000000000000000"
+    "00000000000000e1126f5a0b00000000000000000000006a00000000000000e4"
+    "faadb5b628ab73599320225bfd6a7f2364666000000000000000000000000000"
+    "0000000000000000000000000000000000000000000000000000000000000000"
+    "0000000000000000000000000000000000000000000000000000000000000000"
+    "0000000000000000000000000000000000000000000000000000000000000000"
+    "0000000000000000000000000000000000000000000000000000000000000000"
+    "00000000000000000000000000000000000000"
+)
 
 
 def patch_pyuepak_oodle_nullable_args() -> None:
@@ -402,41 +427,27 @@ def patch_englishsource_uasset(records: list[dict]) -> tuple[bytes, dict]:
     }
 
 
-def read_template_entry1_payload(utoc: bytes, ucas: bytes, layout: dict[str, int]) -> bytes:
-    block_start = layout["block_table_start"]
-    block_size = layout["block_entry_size"]
-    old_block_count = layout["block_count"]
-    block = utoc[
-        block_start + (old_block_count - 1) * block_size : block_start + old_block_count * block_size
-    ]
-    physical_offset = int.from_bytes(block[:5], "little")
-    compressed_size = int.from_bytes(block[5:8], "little")
-    method = block[11]
-    if method != 0:
-        raise RuntimeError("template entry1 payload is unexpectedly compressed")
-    return ucas[physical_offset : physical_offset + compressed_size]
+def build_projectc_directory() -> bytes:
+    # The game resolves this package through the original Projectc mount point.
+    # Retoc-generated IntoTheRadius2 mount paths build cleanly but do not override
+    # the runtime asset.
+    body = bytearray()
+    body += write_fstring("../../../Projectc/Content/ITR2/Configurations/Localization/")
+    body += struct.pack("<i", 1)
+    body += struct.pack("<IIII", 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0)
+    body += struct.pack("<i", 1)
+    body += struct.pack("<III", 0, 0xFFFFFFFF, 0)
+    body += struct.pack("<i", 1)
+    body += write_fstring("EnglishSource.uasset")
+    return bytes(body)
 
 
 def build_englishsource_iostore(patched_uasset: bytes) -> tuple[list[Path], dict]:
-    template_dir = first_existing(ENGLISHSOURCE_TEMPLATE_DIR_CANDIDATES)
-    template_pak = template_dir / f"{ENGLISHSOURCE_BASENAME}.pak"
-    template_utoc = template_dir / f"{ENGLISHSOURCE_BASENAME}.utoc"
-    template_ucas = template_dir / f"{ENGLISHSOURCE_BASENAME}.ucas"
-    for path in [template_pak, template_utoc, template_ucas]:
-        if not path.exists():
-            raise FileNotFoundError(path)
-
-    utoc = bytearray(template_utoc.read_bytes())
-    ucas_template = template_ucas.read_bytes()
-    layout = parse_template_utoc_layout(utoc)
-    if layout["entry_count"] != 2 or layout["block_entry_size"] != 12:
-        raise RuntimeError(f"unexpected EnglishSource template layout: {layout}")
-
-    block_size = layout["block_size"]
+    block_size = IOSTORE_BLOCK_SIZE
     entry0_length = len(patched_uasset)
     entry0_blocks = max(1, math.ceil(entry0_length / block_size))
     entry1_offset = entry0_blocks * block_size
-    entry1_payload = read_template_entry1_payload(utoc, ucas_template, layout)
+    entry1_payload = PROJECTC_ENTRY1_PAYLOAD
     entry1_length = len(entry1_payload)
     block_entries = []
     ucas = bytearray()
@@ -453,29 +464,32 @@ def build_englishsource_iostore(patched_uasset: bytes) -> tuple[list[Path], dict
     ucas += b"\0" * (align(len(ucas)) - len(ucas))
     block_entries.append(pack_block(physical_offset, entry1_length, entry1_length, 0))
 
-    struct.pack_into("<I", utoc, 0x1C, len(block_entries))
-    header = bytes(utoc[: layout["header_size"]])
-    chunk_ids = bytes(utoc[layout["chunk_ids_start"] : layout["chunk_ids_start"] + layout["chunk_ids_size"]])
+    header = bytearray(PROJECTC_IOSTORE_HEADER)
+    struct.pack_into("<I", header, 0x1C, len(block_entries))
+    directory = build_projectc_directory()
+    struct.pack_into("<I", header, 0x30, len(directory))
     offset_lengths = pack_offset_length(0, entry0_length) + pack_offset_length(entry1_offset, entry1_length)
-    extra = bytes(utoc[layout["extra_start"] : layout["extra_start"] + layout["extra_size"]])
-    methods = bytes(utoc[layout["method_table_start"] : layout["method_table_start"] + layout["method_table_size"]])
-    directory = bytes(utoc[layout["directory_start"] : layout["directory_start"] + layout["directory_size"]])
-    old_meta = bytes(utoc[layout["meta_start"] :])
-    if len(old_meta) == 48:
-        meta = (
-            hashlib.sha1(patched_uasset).digest()
-            + b"\0\0\0\0"
-            + hashlib.sha1(entry1_payload).digest()
-            + b"\0\0\0\0"
-        )
-    else:
-        meta = old_meta
+    meta = (
+        hashlib.sha1(patched_uasset).digest()
+        + b"\0\0\0\0"
+        + hashlib.sha1(entry1_payload).digest()
+        + b"\0\0\0\0"
+    )
 
-    new_utoc = header + chunk_ids + offset_lengths + extra + b"".join(block_entries) + methods + directory + meta
+    new_utoc = (
+        bytes(header)
+        + PROJECTC_CHUNK_IDS
+        + offset_lengths
+        + PROJECTC_EXTRA
+        + b"".join(block_entries)
+        + PROJECTC_METHODS
+        + directory
+        + meta
+    )
     pak_out = DIST / f"{ENGLISHSOURCE_BASENAME}.pak"
     utoc_out = DIST / f"{ENGLISHSOURCE_BASENAME}.utoc"
     ucas_out = DIST / f"{ENGLISHSOURCE_BASENAME}.ucas"
-    shutil.copy2(template_pak, pak_out)
+    pak_out.write_bytes(PROJECTC_COMPANION_PAK)
     utoc_out.write_bytes(new_utoc)
     ucas_out.write_bytes(bytes(ucas))
 
@@ -486,7 +500,7 @@ def build_englishsource_iostore(patched_uasset: bytes) -> tuple[list[Path], dict
     files = [pak_out, utoc_out, ucas_out]
     return files, {
         "basename": ENGLISHSOURCE_BASENAME,
-        "template": str(template_dir),
+        "mount": "../../../Projectc/Content/ITR2/Configurations/Localization/",
         "entry0_length": entry0_length,
         "entry1_length": entry1_length,
         "entry0_blocks": entry0_blocks,
@@ -542,16 +556,16 @@ def write_release_readme() -> Path:
                 "",
                 "복사할 파일:",
                 "- pakchunk99-KO_Locres_P.pak",
-                "- pakchunk98-KO_EnglishSource-Windows_P.pak",
-                "- pakchunk98-KO_EnglishSource-Windows_P.utoc",
-                "- pakchunk98-KO_EnglishSource-Windows_P.ucas",
+                "- pakchunk99-KO_UAsset-Windows.pak",
+                "- pakchunk99-KO_UAsset-Windows.utoc",
+                "- pakchunk99-KO_UAsset-Windows.ucas",
                 "- pakchunk100-KO_NotoSansKRFonts_P.pak",
                 "- pakchunk999-Windows_P.pak",
                 "- pakchunk999-Windows_P.utoc",
                 "- pakchunk999-Windows_P.ucas",
                 "",
                 "주의:",
-                "- 기존의 pakchunk99-KO_LocresUnionPreserve_P.pak 및 pakchunk99-KO_UAsset-Windows.* 파일은 오래된 실험판입니다. install.ps1은 해당 파일이 있으면 비활성화합니다.",
+                "- 기존의 pakchunk99-KO_LocresUnionPreserve_P.pak 및 pakchunk98-KO_EnglishSource-Windows_P.* 파일은 오래된 실험판입니다. install.ps1은 해당 파일이 있으면 비활성화합니다.",
                 "- 게임을 실행 중이라면 종료한 뒤 설치하세요.",
                 "- 설치 후에도 일부 이미지 표지판이나 진짜 하드코딩 UI 텍스트는 영어로 남을 수 있습니다.",
             ]
