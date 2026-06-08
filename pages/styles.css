@@ -112,8 +112,9 @@ h2 {
 
 .filters {
   display: grid;
-  grid-template-columns: 1fr 130px;
+  grid-template-columns: minmax(0, 1fr) 130px auto;
   gap: 8px;
+  align-items: center;
   padding: 12px;
   border-bottom: 1px solid var(--line);
 }
@@ -123,6 +124,16 @@ h2 {
   width: 100%;
   min-height: 38px;
   padding: 0 10px;
+}
+
+.resultNav {
+  display: flex;
+  gap: 8px;
+}
+
+.resultNav button {
+  min-width: 62px;
+  white-space: nowrap;
 }
 
 .stats,
@@ -276,6 +287,14 @@ textarea {
   .topActions {
     justify-content: flex-start;
     margin-top: 10px;
+  }
+
+  .filters {
+    grid-template-columns: 1fr 130px;
+  }
+
+  .resultNav {
+    grid-column: 1 / -1;
   }
 
   .layout {

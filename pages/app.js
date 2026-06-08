@@ -1,7 +1,19 @@
 const REPO = "refracta/itr2-ko";
 const MARKER = "ITR2_KO_TRANSLATION_PROPOSAL_V1";
-const DATA_URLS = ["data/unique_sources_with_ko.json", "../translations/unique_sources_with_ko.json"];
-const META_URLS = ["data/site-meta.json"];
+const REPO_PAGES_ROOT = (() => {
+  const marker = "/itr2-ko/";
+  const index = window.location.pathname.indexOf(marker);
+  return index >= 0 ? `${window.location.origin}${window.location.pathname.slice(0, index + marker.length)}` : "";
+})();
+const DATA_URLS = [
+  "data/unique_sources_with_ko.json",
+  REPO_PAGES_ROOT ? `${REPO_PAGES_ROOT}data/unique_sources_with_ko.json` : "",
+  `https://raw.githubusercontent.com/${REPO}/main/translations/unique_sources_with_ko.json`,
+].filter(Boolean);
+const META_URLS = [
+  "data/site-meta.json",
+  REPO_PAGES_ROOT ? `${REPO_PAGES_ROOT}data/site-meta.json` : "",
+].filter(Boolean);
 const MAX_RENDERED = 180;
 
 const state = {
@@ -20,6 +32,8 @@ const el = {
   clearChanges: document.getElementById("clearChanges"),
   searchInput: document.getElementById("searchInput"),
   statusFilter: document.getElementById("statusFilter"),
+  prevResult: document.getElementById("prevResult"),
+  nextResult: document.getElementById("nextResult"),
   stats: document.getElementById("stats"),
   resultMeta: document.getElementById("resultMeta"),
   sourceList: document.getElementById("sourceList"),
@@ -44,19 +58,19 @@ function trimLine(text, limit = 120) {
 }
 
 async function fetchFirst(urls) {
-  let lastError = null;
+  const failures = [];
   for (const url of urls) {
     try {
       const response = await fetch(url, { cache: "no-store" });
       if (response.ok) {
         return response.json();
       }
-      lastError = new Error(`${url}: ${response.status}`);
+      failures.push(`${url}: ${response.status}`);
     } catch (error) {
-      lastError = error;
+      failures.push(`${url}: ${error.message}`);
     }
   }
-  throw lastError || new Error("fetch failed");
+  throw new Error(failures.length ? failures.join(" / ") : "fetch failed");
 }
 
 function storageKey() {
@@ -155,9 +169,19 @@ function filteredRows() {
 
 function renderList() {
   const rows = filteredRows();
-  el.resultMeta.textContent = `검색 결과 ${rows.length.toLocaleString()}개, 최대 ${MAX_RENDERED.toLocaleString()}개 표시`;
+  const selectedIndex = rows.findIndex((row) => row.source_id === state.selectedId);
+  const maxStart = Math.max(0, rows.length - MAX_RENDERED);
+  const start = selectedIndex >= MAX_RENDERED ? Math.min(maxStart, selectedIndex - Math.floor(MAX_RENDERED / 2)) : 0;
+  const renderedRows = rows.slice(start, start + MAX_RENDERED);
+  const rangeText = rows.length > MAX_RENDERED
+    ? ` / 표시 ${start + 1}-${start + renderedRows.length}`
+    : "";
+  const selectedText = selectedIndex >= 0 ? ` / 선택 ${selectedIndex + 1}` : "";
+  el.resultMeta.textContent = `검색 결과 ${rows.length.toLocaleString()}개${rangeText}${selectedText}`;
+  el.prevResult.disabled = rows.length === 0;
+  el.nextResult.disabled = rows.length === 0;
   el.sourceList.innerHTML = "";
-  for (const row of rows.slice(0, MAX_RENDERED)) {
+  for (const row of renderedRows) {
     const button = document.createElement("button");
     button.className = "item";
     if (state.changes.has(row.source_id)) button.classList.add("changed");
@@ -171,6 +195,7 @@ function renderList() {
     button.addEventListener("click", () => selectRow(row.source_id));
     el.sourceList.appendChild(button);
   }
+  el.sourceList.querySelector(".item.active")?.scrollIntoView({ block: "nearest" });
 }
 
 function escapeHtml(text) {
@@ -252,6 +277,17 @@ function selectRow(sourceId) {
   renderList();
 }
 
+function moveSelection(delta) {
+  const rows = filteredRows();
+  if (!rows.length) return;
+  let index = rows.findIndex((row) => row.source_id === state.selectedId);
+  if (index === -1) {
+    index = delta > 0 ? -1 : 0;
+  }
+  const nextIndex = (index + delta + rows.length) % rows.length;
+  selectRow(rows[nextIndex].source_id);
+}
+
 function downloadJson() {
   const blob = new Blob([JSON.stringify(proposalPayload(), null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -321,6 +357,8 @@ async function init() {
 
 el.searchInput.addEventListener("input", renderList);
 el.statusFilter.addEventListener("change", renderList);
+el.prevResult.addEventListener("click", () => moveSelection(-1));
+el.nextResult.addEventListener("click", () => moveSelection(1));
 el.exportProposal.addEventListener("click", downloadJson);
 el.submitIssue.addEventListener("click", openIssue);
 el.clearChanges.addEventListener("click", () => {
