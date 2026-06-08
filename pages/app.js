@@ -22,6 +22,7 @@ const state = {
   originalKo: new Map(),
   changes: new Map(),
   selectedId: null,
+  pageStart: 0,
   meta: {},
 };
 
@@ -170,16 +171,16 @@ function filteredRows() {
 function renderList() {
   const rows = filteredRows();
   const selectedIndex = rows.findIndex((row) => row.source_id === state.selectedId);
-  const maxStart = Math.max(0, rows.length - MAX_RENDERED);
-  const start = selectedIndex >= MAX_RENDERED ? Math.min(maxStart, selectedIndex - Math.floor(MAX_RENDERED / 2)) : 0;
-  const renderedRows = rows.slice(start, start + MAX_RENDERED);
+  const maxPageStart = Math.max(0, Math.floor(Math.max(0, rows.length - 1) / MAX_RENDERED) * MAX_RENDERED);
+  if (state.pageStart > maxPageStart) state.pageStart = maxPageStart;
+  const renderedRows = rows.slice(state.pageStart, state.pageStart + MAX_RENDERED);
   const rangeText = rows.length > MAX_RENDERED
-    ? ` / 표시 ${start + 1}-${start + renderedRows.length}`
+    ? ` / 표시 ${state.pageStart + 1}-${state.pageStart + renderedRows.length}`
     : "";
   const selectedText = selectedIndex >= 0 ? ` / 선택 ${selectedIndex + 1}` : "";
   el.resultMeta.textContent = `검색 결과 ${rows.length.toLocaleString()}개${rangeText}${selectedText}`;
-  el.prevResult.disabled = rows.length === 0;
-  el.nextResult.disabled = rows.length === 0;
+  el.prevResult.disabled = state.pageStart === 0;
+  el.nextResult.disabled = state.pageStart + MAX_RENDERED >= rows.length;
   el.sourceList.innerHTML = "";
   for (const row of renderedRows) {
     const button = document.createElement("button");
@@ -277,15 +278,13 @@ function selectRow(sourceId) {
   renderList();
 }
 
-function moveSelection(delta) {
+function movePage(delta) {
   const rows = filteredRows();
   if (!rows.length) return;
-  let index = rows.findIndex((row) => row.source_id === state.selectedId);
-  if (index === -1) {
-    index = delta > 0 ? -1 : 0;
-  }
-  const nextIndex = (index + delta + rows.length) % rows.length;
-  selectRow(rows[nextIndex].source_id);
+  const maxPageStart = Math.max(0, Math.floor(Math.max(0, rows.length - 1) / MAX_RENDERED) * MAX_RENDERED);
+  state.pageStart = Math.min(maxPageStart, Math.max(0, state.pageStart + delta * MAX_RENDERED));
+  renderList();
+  el.sourceList.scrollTop = 0;
 }
 
 function downloadJson() {
@@ -355,10 +354,16 @@ async function init() {
   }
 }
 
-el.searchInput.addEventListener("input", renderList);
-el.statusFilter.addEventListener("change", renderList);
-el.prevResult.addEventListener("click", () => moveSelection(-1));
-el.nextResult.addEventListener("click", () => moveSelection(1));
+el.searchInput.addEventListener("input", () => {
+  state.pageStart = 0;
+  renderList();
+});
+el.statusFilter.addEventListener("change", () => {
+  state.pageStart = 0;
+  renderList();
+});
+el.prevResult.addEventListener("click", () => movePage(-1));
+el.nextResult.addEventListener("click", () => movePage(1));
 el.exportProposal.addEventListener("click", downloadJson);
 el.submitIssue.addEventListener("click", openIssue);
 el.clearChanges.addEventListener("click", () => {
