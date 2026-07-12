@@ -69977,7 +69977,7 @@
     "source_id": "83ed89359f876853",
     "source": "Vomiter",
     "char_len": 7,
-    "translatable": true,
+    "translatable": false,
     "placeholders": [],
     "record_count": 1,
     "containers": [
@@ -69992,8 +69992,8 @@
     "reference_ja": [
       "吐瀉物"
     ],
-    "ko": "보미터",
-    "translation_status": "translated"
+    "ko": "Vomiter",
+    "translation_status": "not_translatable"
   },
   {
     "source_id": "ef733067afbb0d8e",

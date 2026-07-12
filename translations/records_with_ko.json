@@ -54328,12 +54328,12 @@
     "source": "Trigger",
     "source_id": "d3f06a581b2b66fa",
     "char_len": 7,
-    "translatable": true,
+    "translatable": false,
     "placeholders": [],
     "reference_ru": "Спуск",
     "reference_ja": "トリガー",
     "notes": [],
-    "ko": "트리거",
+    "ko": "Trigger",
     "reference_ja_key_collision_warning": false
   },
   {
@@ -93887,12 +93887,12 @@
     "source": "Vomiter",
     "source_id": "83ed89359f876853",
     "char_len": 7,
-    "translatable": true,
+    "translatable": false,
     "placeholders": [],
     "reference_ru": "Рвотник",
     "reference_ja": "吐瀉物",
     "notes": [],
-    "ko": "보미터",
+    "ko": "Vomiter",
     "reference_ja_key_collision_warning": false
   },
   {
