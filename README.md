@@ -57,5 +57,6 @@ pakchunk999-Windows_P.ucas
 - Nexus Mods: [Japanese Translation Mod](https://www.nexusmods.com/intotheradius2/mods/145)
 - Nexus Mods: [ITR2 Japanese Translation by Reindeer1899](https://www.nexusmods.com/intotheradius2/mods/211)
 - Nexus Mods: [Russian for Into the Radius 2](https://www.nexusmods.com/intotheradius2/mods/144)
+- Nexus Mods: [IntoTheRadius2 SimplifiedChinese Localization](https://www.nexusmods.com/intotheradius2/mods/258)
 - Steam Community Guide: [Руссификатор](https://steamcommunity.com/sharedfiles/filedetails/?id=3657194872)
 - Steam Discussion: [LOCALIZATION - MOD - DEV](https://steamcommunity.com/app/2307350/discussions/0/591783706468080541/)
