@@ -1,6 +1,6 @@
 # Into the Radius 2 한국어 번역 패치
 
-Into the Radius 2 한국어 번역 패치입니다. `v1.0.6 rev 44918` 버전 기준입니다.
+Into the Radius 2 한국어 번역 패치입니다. `Hotfix Patch 1.1.2` / Steam buildid `24024260` 기준입니다.
 
 ## 번역 견본
 

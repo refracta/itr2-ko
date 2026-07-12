@@ -8,10 +8,10 @@
 
 | 항목 | 값 |
 | --- | --- |
-| 게임 버전 | `v1.0.6 rev 44918` |
+| 게임 버전 | `Hotfix Patch 1.1.2` |
 | Steam appid | `2307350` |
-| Steam buildid | `23110238` |
-| Depot manifest | `8219654773261890178` |
+| Steam buildid | `24024260` |
+| Depot manifest | `7511230389032699628` |
 
 게임 업데이트 후에는 `Game.locres` 엔트리, `EnglishSource.uasset` offset, IoStore override 경로가 달라질 수 있습니다. 새 빌드에서는 원본 리소스를 다시 추출하고 빌드 검증을 다시 해야 합니다.
 
