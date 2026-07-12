@@ -1,4 +1,13 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
+
+try {
+    $utf8NoBom = New-Object System.Text.UTF8Encoding -ArgumentList $false
+    [Console]::InputEncoding = $utf8NoBom
+    [Console]::OutputEncoding = $utf8NoBom
+    $OutputEncoding = $utf8NoBom
+} catch {
+    # Older hosts may not expose all console encoding properties.
+}
 
 Add-Type -AssemblyName System.Windows.Forms
 
