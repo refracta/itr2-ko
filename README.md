@@ -1,6 +1,6 @@
 # Into the Radius 2 한국어 번역 패치
 
-커뮤니티 한국어 번역 패치입니다. `Into the Radius 2 v1.0.6 rev 44918` 버전 기준입니다.
+Into the Radius 2 한국어 번역 패치입니다. `v1.0.6 rev 44918` 버전 기준입니다.
 
 ## 번역 견본
 
