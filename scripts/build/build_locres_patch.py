@@ -123,6 +123,168 @@ EXTRA_ENGLISHSOURCE_LOCRES_ENTRIES = [
         "source": "On",
         "ko": "켜기",
     },
+    {
+        "key": "6F632A8D4F0E819C11B70D94DD088076",
+        "source": "Critical Damage Chance",
+        "source_hash": 0xAB97C063,
+        "ko": "치명타 확률",
+    },
+    {
+        "key": "1651B78043E93A1063C7DB928F90A865",
+        "source": "Critical Damage Multiplier",
+        "source_hash": 0xDB544335,
+        "ko": "치명타 피해 배율",
+    },
+    {
+        "key": "44CB5BB84F04285E8C0A59B71B273E2B",
+        "source": "Please insert ammo box first",
+        "source_hash": 0xFE9C7A42,
+        "ko": "먼저 탄약 상자를 삽입하세요.",
+    },
+    {
+        "key": "4712CCB64C555D9096DE558EC26C48F7",
+        "source": "Please insert magazine first",
+        "source_hash": 0x5FE1B731,
+        "ko": "먼저 탄창을 삽입하세요.",
+    },
+    {
+        "key": "7B578A434CAA59FA50AEC08E7995C7CE",
+        "source": "Magazine and ammo box are incompatible",
+        "source_hash": 0xAE4D1C14,
+        "ko": "탄창과 탄약 상자가 호환되지 않습니다.",
+    },
+    {
+        "key": "718532FA495485ACC1ACE2855CC37143",
+        "source": "Magazine is full - cannot continue loading",
+        "source_hash": 0xE4EE9535,
+        "ko": "탄창이 가득 차 더 이상 장전할 수 없습니다.",
+    },
+    {
+        "key": "F797E76841F101620F0302AAF412B516",
+        "source": "Ammo box is empty - cannot continue loading",
+        "source_hash": 0x6EB7A98B,
+        "ko": "탄약 상자가 비어 더 이상 장전할 수 없습니다.",
+    },
+    {
+        "key": "373E49414B52687EDB2995B0C40C6BD0",
+        "source": "This magazine cannot be loaded from the ammo loader",
+        "source_hash": 0xF052C4CB,
+        "ko": "이 탄창은 장전기로 장전할 수 없습니다.",
+    },
+    {
+        "key": "4B6B21EE4658F6268DD5B8931E2ED491",
+        "source": "There is no unresolved ammo in the magazine",
+        "source_hash": 0x2300E1A6,
+        "ko": "탄창에 처리할 탄약이 없습니다.",
+    },
+    {
+        "key": "013AFD64401A537A996D909322FF143D",
+        "source": "Not found",
+        "source_hash": 0x9DB9AD30,
+        "ko": "찾을 수 없음",
+    },
+    {
+        "key": "FF9B5C294C75DE489E67CF8075CF7AAD",
+        "source": "Finish",
+        "source_hash": 0x92ED1B06,
+        "ko": "완료",
+    },
+    {
+        "key": "F5C1F8024F9CA678C4B982BE3C26E5E5",
+        "source": "Start",
+        "source_hash": 0xC7CAA3AB,
+        "ko": "시작",
+    },
+    {
+        "key": "3A339A424B94B1582586EF8A5A0FC385",
+        "source": "In Progress",
+        "source_hash": 0xA551D35C,
+        "ko": "진행 중",
+    },
+    {
+        "key": "50776DA34EF627D87E0922985297741B",
+        "source": "UNPSC Explorer",
+        "source_hash": 0xAF5DA93F,
+        "ko": "UNPSC 탐사자",
+    },
+    {
+        "key": "EF1AE93746A87E656DB4D8B5D2344814",
+        "source": "Pass",
+        "source_hash": 0xCC403A57,
+        "ko": "통과",
+    },
+    {
+        "key": "833004CA4C1E9D10B05FBB99B7695547",
+        "source": "Pass",
+        "source_hash": 0xCC403A57,
+        "ko": "통과",
+    },
+    {
+        "key": "750BFF584257DFD856B1519B35534409",
+        "source": "Skip",
+        "source_hash": 0xF071E4C9,
+        "ko": "건너뛰기",
+    },
+    {
+        "key": "47E20FEC42A3BAF0A69BEF9229FD5003",
+        "source": "Skip",
+        "source_hash": 0xF071E4C9,
+        "ko": "건너뛰기",
+    },
+    {
+        "key": "6912D366473F5161D4022D9FD8F75A5F",
+        "source": "<b>Carry Load</b> Indicates how much weight the Explorer is currently carrying relative to their total capacity. <L2><b>Armor Protection Level</b>",
+        "source_hash": 0x129C22C6,
+        "ko": "<b>소지 중량</b>은 탐사자가 현재 들고 있는 무게가 총 적재 한도에서 차지하는 비율을 표시합니다.<L2><b>방어구 방호 등급</b>",
+    },
+    {
+        "key": "A3B1685C43EEA7B80D5820889DEC17D6",
+        "source": "Ammo Loader",
+        "source_hash": 0xA5F49EC6,
+        "ko": "탄창 장전기",
+    },
+    {
+        "key": "17D131D34C68A524573B94AF56DE32A7",
+        "source": " ",
+        "source_hash": 0xF3E0D76D,
+        "ko": " ",
+    },
+    {
+        "key": "EE4C460F434AEA4411EA4A9F976D6400",
+        "source": "Waiting for scan to complete.",
+        "source_hash": 0x0BA20D5E,
+        "ko": "스캔이 완료될 때까지 기다리세요.",
+    },
+    {
+        "key": "2BD7FF5A42FEAB6E3CB65DA996BD9B70",
+        "source": "Access mission point",
+        "source_hash": 0x6EEE0613,
+        "ko": "임무 지점 접속",
+    },
+    {
+        "key": "47BA2E794AD4060FE50CDA967EF9E536",
+        "source": "I'm broken",
+        "source_hash": 0x980147F6,
+        "ko": "고장났어",
+    },
+    {
+        "key": "51D2CAE94DC1F33D24708E946420B206",
+        "source": "I'm broken",
+        "source_hash": 0x980147F6,
+        "ko": "고장났어",
+    },
+    {
+        "key": "8A0AC0D840310FCA66C8BDB4242F01C0",
+        "source": "I'm broken",
+        "source_hash": 0x980147F6,
+        "ko": "고장났어",
+    },
+    {
+        "key": "703A893C42F84072BBCB388CED98B70F",
+        "source": "Hey, dude!",
+        "source_hash": 0x936AC88C,
+        "ko": "이봐, 친구!",
+    },
 ]
 
 
@@ -207,6 +369,13 @@ def text_key_hash(text: str) -> int:
         return 0
     hashed = cityhash.CityHash64(text.encode("utf-16le"))
     return ((hashed & 0xFFFFFFFF) + (((hashed >> 32) & 0xFFFFFFFF) * 23)) & 0xFFFFFFFF
+
+
+def explicit_or_computed_source_hash(entry: dict) -> int:
+    value = entry.get("source_hash")
+    if value is None:
+        return source_hash(entry["source"])
+    return int(value)
 
 
 def align(value: int, alignment: int = AES_ALIGNMENT) -> int:
@@ -723,7 +892,7 @@ def main() -> None:
             "namespace": "EnglishSource",
             "key": extra["key"],
             "key_hash": text_key_hash(extra["key"]),
-            "source_hash": source_hash(extra["source"]),
+            "source_hash": explicit_or_computed_source_hash(extra),
             "ko": extra["ko"],
         }
 
